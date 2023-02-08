@@ -1,0 +1,295 @@
+/* Ionic Variables and Theming. For more info, please see:
+http://ionicframework.com/docs/theming/ */
+
+/** Ionic CSS Variables **/
+:root {
+	--ion-background-color: #fff;
+	--ion-border-color: #c4c4c4;
+	--ion-toolbar-background: transparent;
+	--ion-font-family: 'Trebuchet MS', sans-serif;
+
+	--ion-color-primary: #1f94db;
+	--ion-color-primary-rgb: 31,148,219;
+	--ion-color-primary-contrast: #ffffff;
+	--ion-color-primary-contrast-rgb: 255,255,255;
+	--ion-color-primary-shade: #1b82c1;
+	--ion-color-primary-tint: #359fdf;
+
+	--ion-color-secondary: #0e0e0e;
+	--ion-color-secondary-rgb: 14,14,14;
+	--ion-color-secondary-contrast: #ffffff;
+	--ion-color-secondary-contrast-rgb: 255,255,255;
+	--ion-color-secondary-shade: #0c0c0c;
+	--ion-color-secondary-tint: #262626;
+
+	--ion-color-success: #6bc1bd;
+	--ion-color-success-rgb: 107,193,189;
+	--ion-color-success-contrast: #000000;
+	--ion-color-success-contrast-rgb: 0,0,0;
+	--ion-color-success-shade: #5eaaa6;
+	--ion-color-success-tint: #7ac7c4;
+
+	--ion-color-warning: #ffc409;
+	--ion-color-warning-rgb: 255,196,9;
+	--ion-color-warning-contrast: #000000;
+	--ion-color-warning-contrast-rgb: 0,0,0;
+	--ion-color-warning-shade: #e0ac08;
+	--ion-color-warning-tint: #ffca22;
+
+	--ion-color-danger: #aa0927;
+	--ion-color-danger-rgb: 170,9,39;
+	--ion-color-danger-contrast: #ffffff;
+	--ion-color-danger-contrast-rgb: 255,255,255;
+	--ion-color-danger-shade: #960822;
+	--ion-color-danger-tint: #b3223d;
+
+	--ion-color-medium: #92949c;
+	--ion-color-medium-rgb: 146,148,156;
+	--ion-color-medium-contrast: #000000;
+	--ion-color-medium-contrast-rgb: 0,0,0;
+	--ion-color-medium-shade: #808289;
+	--ion-color-medium-tint: #9d9fa6;
+
+	--ion-color-light: #f4f5f8;
+	--ion-color-light-rgb: 244,245,248;
+	--ion-color-light-contrast: #000000;
+	--ion-color-light-contrast-rgb: 0,0,0;
+	--ion-color-light-shade: #d7d8da;
+	--ion-color-light-tint: #f5f6f9;
+}
+
+html, body {
+	background-color: #fff !important;
+}
+
+ion-avatar img {
+    padding: 3px;
+    border: 3px solid #fff;
+}
+
+ion-buttons {
+    cursor: pointer;
+}
+
+.list-ios {
+	background: none;
+}
+
+ion-content {
+    --background: url('../images/background.jpg') no-repeat center/cover;
+    --padding-top: 12px;
+    --padding-bottom: 60px;
+    --padding-start: 20px;
+    --padding-end: 20px;
+}
+
+ion-back-button {
+    display: block;
+}
+
+ion-toolbar {
+    background-color: #1f94db;
+    --min-height: 80px;
+    color: #fff;
+	--border-color: none;
+	--opacity: 1;
+	--border-width: 0 !important;
+	--padding-start: 12px;
+	--padding-end: 12px;
+}
+
+ion-header {
+	box-shadow: 0 3px 3px #ccc;
+}
+
+ion-header::after {
+	--background: transparent;
+}
+
+ion-header::after {
+	display: none;
+}
+
+
+
+.mapboxgl-ctrl-geocoder--input {
+	font-size: 14px;
+	font-weight: bold;
+	padding: 10px 45px 10px 55px;
+	height: 55px !important;
+	overflow: hidden;
+}
+
+.mapboxgl-ctrl-geocoder--input::placeholder {
+	font-weight: normal;
+}
+
+.mapboxgl-ctrl-geocoder {
+	box-shadow: none;
+}
+
+.mapboxgl-ctrl-geocoder svg {
+	display: none;
+}
+
+.mapboxgl-ctrl-geocoder--input:focus {
+	outline: none;
+}
+
+.mapboxgl-ctrl-geocoder--pin-right button {
+	top: 0 !important;
+	right: 13px !important;
+	bottom: 0;
+}
+
+.mapboxgl-ctrl-geocoder--pin-right button svg {
+	display: block;
+	margin: 0;
+	fill: #aaa !important;
+}
+
+.mapboxgl-ctrl button:not(:disabled):hover {
+	background: none;
+}
+
+#geocoder1 .suggestions-wrapper {
+	position: absolute;
+	top: 100%;
+	width: 100%;
+	height: auto;
+	z-index: 123;
+	left: 50%;
+	right: 50%;
+	transform: translateX(-50%);
+}
+
+#geocoder2 .suggestions-wrapper {
+	position: absolute;
+	top: 100%;
+	width: 100%;
+	height: auto;
+	z-index: 123;
+	left: 50%;
+	right: 50%;
+	transform: translateX(-50%);
+}
+
+#geocoder .mapboxgl-ctrl-geocoder {
+	width: 100%;
+	display: block;
+	max-width: unset;
+}
+
+ion-backdrop {
+	width: 100%;
+	height: 100%;
+}
+
+ion-loading.custom-loading {
+	--backdrop-opacity: 0.9;
+	--background: #fff;
+	--spinner-color: #910720;
+	color: #fff;
+}
+
+ion-loading.custom-loading  .loading-wrapper {
+	flex-flow: column !important;
+	background: none !important;
+	border-radius: 0 !important;
+}
+
+
+ion-loading.custom-loading  .loading-wrapper .loading-content {
+	margin: 10px 0 0 !important;
+}
+
+.form-container ion-item {
+    --min-height: 56px !important;
+    --padding-start: 12px;
+    --padding-end: 12px;
+    --inner-padding-start: 0;
+    --inner-padding-end: 0;
+    --border-width: 1px;
+    --inner-border-width: 0;
+    --border-radius: 12px;
+	--background: var(--ion-color-light-tint) !important;
+    margin-bottom: 10px;
+}
+
+.form-container ion-label {
+    font-size: 12px !important;
+    margin: 10px 0 5px !important;
+    color: #1f94db !important;
+}
+
+.form-container ion-input, .form-container ion-textarea {
+    font-size: 16px;
+    line-height: 100%;
+    border: 0;
+    padding: 0;
+	border-radius: 0;
+    --color: #000 !important;
+    --inner-padding-top: 0;
+    --inner-padding-bottom: 0;
+    --inner-padding-start: 0;
+    --inner-padding-end: 0;
+    --padding-top: 0 !important;
+    --padding-bottom: 8px !important;
+    --padding-start: 0;
+    --padding-end: 0;
+    --border-width: 0;
+    --placeholder-color: #000 !important;
+    --placeholder-opacity: 1;
+	--border-radius: 0;
+}
+
+.action-sheet-group-cancel button, button.alert-button-role-confirm {
+	color: #3880ff !important;
+}
+
+ion-toast.spinner::part(icon) {
+	display: inline-block;
+	animation: spin 1s infinite linear;
+}
+
+.title_txt {
+	text-align: center;
+	margin: 0 auto;
+	display: block;
+}
+
+ion-card-header ion-avatar {
+	margin: 0 auto;
+}
+
+ion-datetime {
+	border-radius: 8px;
+	color: #000 !important;
+	min-width: 100%;
+}
+
+ion-text {
+	font-size: 21px;
+}
+
+ion-label h1 {
+	font-size: 20px !important;
+}
+
+ion-title {
+    font-size: 22px;
+}
+
+ion-avatar {
+    width: 40px;
+    height: 40px;
+}
+
+@keyframes spin {
+	0% {
+		transform:rotate(0deg)
+	}
+	100% {
+		transform:rotate(359deg)
+	}
+}
