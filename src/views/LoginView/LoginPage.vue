@@ -209,7 +209,7 @@ export default defineComponent({
 <style scoped>
 
 ion-content {
-    --padding-top: 67px;
+    --padding-top: 30px;
 }
 
 ion-header {

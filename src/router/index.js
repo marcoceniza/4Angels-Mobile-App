@@ -13,6 +13,7 @@ import EmployeeProfile from '@/views/EmployeeView/Profile.vue';
 import SchedulesView from '@/views/EmployeeView/Schedules.vue';
 import TimeClockOut from '@/views/EmployeeView/TimeClockOutView.vue';
 import NotificationsView from '@/views/EmployeeView/Notifications.vue';
+import TimesheetsView from '@/views/EmployeeView/Timesheets.vue';
 
 const routes = [
   {
@@ -58,6 +59,13 @@ const routes = [
       {
         path: '/employee/notifications',
         component: NotificationsView,
+        beforeEnter: () => {
+          if (!lStore.isset('user_token')) return '/login';
+        },
+      },
+      {
+        path: '/employee/timesheets',
+        component: TimesheetsView,
         beforeEnter: () => {
           if (!lStore.isset('user_token')) return '/login';
         },

@@ -10,18 +10,19 @@
                         <img src="../../images/profile.svg" v-else/>
                     </ion-avatar>
                 </ion-buttons>
-                <ion-title>Notifications</ion-title>
+                <ion-title>Timesheets</ion-title>
             </ion-toolbar>
         </ion-header>
         </ion-toolbar>
         <ion-content fullscreen="true">
-            
-            <ion-list v-for="notifs in this.notif" :key="notifs.id">
-                <ion-item :class="(notifs.notifications_isseen > 0) ? 'isPending' : 'isRead'" lines="none" button @click="isSeen(notifs.notifications_id), $router.push('/employee/schedules')">
-                    <ion-label>
-                        <h1 class="ion-margin-bottom">{{ notifs.notifications_title }}</h1>
-                        <p class="ion-text-wrap">Description: {{ notifs.notifications_description }}</p>
-                        <p>Date: {{ dateFormat('%lm %d, %y', notifs.notifications_createdate) }}</p>
+        
+            <ion-list v-for="timesheet in timesheets" :key="timesheet.id">
+                <ion-item lines="none" class="doneSchedules">
+                    <ion-label class="ion-text-wrap">
+                        <h1>{{ timesheet.role_name }}</h1>
+                        <p>{{ timesheet.facility_location }}</p>
+                        <p>{{ dateFormat('%lm %d, %y', timesheet.schedules_dates) }}</p>
+                        <p>ID: {{ timesheet.assigndesignation_employeeid }}</p>
                     </ion-label>
                 </ion-item>
             </ion-list>
@@ -36,32 +37,27 @@ import { IonContent, IonPage, IonAvatar, IonButtons, IonToolbar, IonHeader, IonL
 import { lStore, axios, dateFormat } from '@/functions';
 
 export default defineComponent({
-    name: 'NotificationsView',
+    name: 'TimesheetsView',
     components: { IonContent, IonPage, IonAvatar, IonButtons, IonToolbar, IonHeader, IonList, IonItem, IonLabel, IonTitle },
     data() {
         return {
             user: {},
             cifile: 'https://www.4angelshc.com/mobile/filesystem/',
-            notif: ''
+            notif: '',
+            timesheets: ''
         }
     },
     created() {
         this.user = lStore.get('user_info');
     },
     methods: {
-        dateFormat,
-        isSeen(ID) {
-            axios.post(`notifications/update?userid=${lStore.get('user_info').employee_id}&id=${ID}`, null, { notifications_isseen: 0 }).then(res => {
-                if(!res.data.success) return;
-                return true;
-            });
-        }
+        dateFormat
     },
     mounted() {
         setInterval(() => {
-            axios.post(`notifications?_batch=true&notifications_userid=${lStore.get('user_info').employee_id}`).then(res => {
+            axios.post(`userDesignations?_joins=assignschedules,schedules,facility,role&_on=assigndesignation_id=assignschedules_assigndesignationid,schedules_id=assignschedules_scheduleid,facility_id=assigndesignation_facilityid,role_id=assigndesignation_roleid&assigndesignation_employeeid=${lStore.get('user_info').employee_id}&_batch=true`).then(res => {
                 if(!res.data.success) return;
-                this.notif = res.data.result.reverse();
+                this.timesheets = res.data.result.reverse();
             });
         }, 1000);
     },
@@ -168,6 +164,11 @@ ion-toolbar ion-text {
 
 ion-label h1 {
     margin-bottom: 8px;
+}
+
+.doneSchedules {
+    border-left: 6px solid #999999 !important;
+    --background: #eee !important;
 }
 
 </style>
