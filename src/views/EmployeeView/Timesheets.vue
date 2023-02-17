@@ -14,57 +14,124 @@
             </ion-toolbar>
         </ion-header>
         </ion-toolbar>
-        <ion-content fullscreen="true">
-        
+        <ion-content id="timesheets_content" fullscreen="true" @click="showArrowTimesheets" @ionScroll="scrollTopTimesheets($event)" scroll-events>
+
+            <div class="sortTimesheets">
+                <p>Total: {{ this.totalTimesheets }}</p>
+                <p><a href="javascript:;" @click="sortTimesheetsHandler"><ion-icon :icon="funnel"></ion-icon></a></p>
+            </div>
+
             <ion-list v-for="timesheet in timesheets" :key="timesheet.id">
                 <ion-item lines="none" class="doneSchedules">
                     <ion-label class="ion-text-wrap">
                         <h1>{{ timesheet.role_name }}</h1>
-                        <p>{{ timesheet.facility_location }}</p>
-                        <p>{{ dateFormat('%lm %d, %y', timesheet.schedules_dates) }}</p>
+                        <p>Location: {{ timesheet.facility_location }}</p>
+                        <p>Date: {{ dateFormat('%lm %d, %y', timesheet.schedules_dates) }}</p>
                         <p>ID: {{ timesheet.assigndesignation_employeeid }}</p>
                     </ion-label>
                 </ion-item>
             </ion-list>
-            
+
+            <a class="scrollTopTimesheets" href="javascript:;"><ion-icon :icon="chevronUpCircle"></ion-icon></a>
+        
         </ion-content>
     </ion-page>
 </template>
 
 <script>
 import { defineComponent } from 'vue';
-import { IonContent, IonPage, IonAvatar, IonButtons, IonToolbar, IonHeader, IonList, IonItem, IonLabel, IonTitle } from '@ionic/vue';
+import { IonContent, IonPage, IonAvatar, IonButtons, IonToolbar, IonHeader, IonList, IonItem, IonLabel, IonTitle, IonIcon } from '@ionic/vue';
 import { lStore, axios, dateFormat } from '@/functions';
+import { funnel, chevronUpCircle } from 'ionicons/icons';
 
 export default defineComponent({
     name: 'TimesheetsView',
-    components: { IonContent, IonPage, IonAvatar, IonButtons, IonToolbar, IonHeader, IonList, IonItem, IonLabel, IonTitle },
+    components: { IonContent, IonPage, IonAvatar, IonButtons, IonToolbar, IonHeader, IonList, IonItem, IonLabel, IonTitle, IonIcon },
     data() {
         return {
             user: {},
             cifile: 'https://www.4angelshc.com/mobile/filesystem/',
             notif: '',
-            timesheets: ''
+            timesheets: '',
+            totalTimesheets: ''
         }
     },
     created() {
         this.user = lStore.get('user_info');
     },
+    setup() {
+        const scrollTopTimesheets = (env) => {
+            if(env.detail.scrollTop > 80) {
+                document.querySelector('.scrollTopTimesheets').classList.add('showArrowTimesheets');
+            }else {
+                document.querySelector('.scrollTopTimesheets').classList.remove('showArrowTimesheets');
+            }
+        }
+        return { funnel, chevronUpCircle, scrollTopTimesheets }
+    },
     methods: {
-        dateFormat
+        dateFormat,
+        showArrowTimesheets() {
+            document.getElementById('timesheets_content').scrollToTop(1500);
+        },
+        sortTimesheetsHandler() {
+            this.timesheets.reverse()
+            clearInterval(this.realtimeData2);
+        }
     },
     mounted() {
-        setInterval(() => {
-            axios.post(`userDesignations?_joins=assignschedules,schedules,facility,role&_on=assigndesignation_id=assignschedules_assigndesignationid,schedules_id=assignschedules_scheduleid,facility_id=assigndesignation_facilityid,role_id=assigndesignation_roleid&assigndesignation_employeeid=${lStore.get('user_info').employee_id}&_batch=true`).then(res => {
+        this.realtimeData2 = setInterval(() => {
+            axios.post(`userDesignations?_joins=assignschedules,schedules,facility,role&_on=assigndesignation_id=assignschedules_assigndesignationid,schedules_id=assignschedules_scheduleid,facility_id=assigndesignation_facilityid,role_id=assigndesignation_roleid&assigndesignation_employeeid=${lStore.get('user_info').employee_id}&_batch=true&_orderedby=schedules__dates_DESC`).then(res => {
                 if(!res.data.success) return;
-                this.timesheets = res.data.result.reverse();
+                this.timesheets = res.data.result;
+                this.totalTimesheets = Object.keys(this.timesheets).length;
             });
-        }, 1000);
+        }, 1000)
     },
 });
 </script>
 
 <style scoped>
+
+.scrollTopTimesheets {
+    position: fixed;
+    bottom: 15px;
+    right: 12px;
+    z-index: 9999;
+    display: block;
+    font-size: 35px;
+    color: #000;
+    display: none;
+}
+
+.sortTimesheets {
+    text-align: right;
+    margin: 10px 0 8px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.sortTimesheets ion-icon {
+    color: #92949c;
+}
+
+.sortTimesheets p {
+    margin: 0;
+}
+
+.sortTimesheets p:first-child {
+    font-size: 14px;
+    font-style: italic;
+    color: #999;
+}
+
+.showArrowTimesheets {
+    display: block;
+}
+
+.sortTimesheets a {
+    color: #000;
+}
 
 ion-menu ion-content ion-item ion-label {
     margin: 0;
@@ -168,7 +235,7 @@ ion-label h1 {
 
 .doneSchedules {
     border-left: 6px solid #999999 !important;
-    --background: #eee !important;
+    --background: #f2f2f2 !important;
 }
 
 </style>

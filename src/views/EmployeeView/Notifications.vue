@@ -14,7 +14,12 @@
             </ion-toolbar>
         </ion-header>
         </ion-toolbar>
-        <ion-content fullscreen="true">
+        <ion-content id="notif_content" fullscreen="true" @click="showArrowNotif" @ionScroll="scrollTopNotif($event)" scroll-events >
+
+            <div class="sortNotif">
+                <p>Total: {{ this.totalNotif }}</p>
+                <p><a href="javascript:;" @click="sortNotifHandler"><ion-icon :icon="funnel"></ion-icon></a></p>
+            </div>
             
             <ion-list v-for="notifs in this.notif" :key="notifs.id">
                 <ion-item :class="(notifs.notifications_isseen > 0) ? 'isPending' : 'isRead'" lines="none" button @click="isSeen(notifs.notifications_id), $router.push('/employee/schedules')">
@@ -25,6 +30,8 @@
                     </ion-label>
                 </ion-item>
             </ion-list>
+
+            <a class="scrollTopNotif" href="javascript:;"><ion-icon :icon="chevronUpCircle"></ion-icon></a>
             
         </ion-content>
     </ion-page>
@@ -32,36 +39,59 @@
 
 <script>
 import { defineComponent } from 'vue';
-import { IonContent, IonPage, IonAvatar, IonButtons, IonToolbar, IonHeader, IonList, IonItem, IonLabel, IonTitle } from '@ionic/vue';
+import { IonContent, IonPage, IonAvatar, IonButtons, IonToolbar, IonHeader, IonList, IonItem, IonLabel, IonTitle, IonIcon } from '@ionic/vue';
 import { lStore, axios, dateFormat } from '@/functions';
+import { funnel, chevronUpCircle, notificationsCircle } from 'ionicons/icons';
 
 export default defineComponent({
     name: 'NotificationsView',
-    components: { IonContent, IonPage, IonAvatar, IonButtons, IonToolbar, IonHeader, IonList, IonItem, IonLabel, IonTitle },
+    components: { IonContent, IonPage, IonAvatar, IonButtons, IonToolbar, IonHeader, IonList, IonItem, IonLabel, IonTitle, IonIcon },
     data() {
         return {
             user: {},
             cifile: 'https://www.4angelshc.com/mobile/filesystem/',
-            notif: ''
+            notif: '',
+            realtimeData: '',
+            continueInterval: false,
+            totalNotif: ''
         }
+    },
+    setup() {
+        const scrollTopNotif = (env) => {
+            if(env.detail.scrollTop > 80) {
+                document.querySelector('.scrollTopNotif').classList.add('showArrowNotif');
+            }else {
+                document.querySelector('.scrollTopNotif').classList.remove('showArrowNotif');
+            }
+        }
+
+        return { funnel, chevronUpCircle, scrollTopNotif, notificationsCircle }
     },
     created() {
         this.user = lStore.get('user_info');
     },
     methods: {
         dateFormat,
+        showArrowNotif() {
+            document.getElementById('notif_content').scrollToTop(1500);
+        },
+        sortNotifHandler() {
+            this.notif.reverse();
+            clearInterval(this.realtimeData);
+        },
         isSeen(ID) {
             axios.post(`notifications/update?userid=${lStore.get('user_info').employee_id}&id=${ID}`, null, { notifications_isseen: 0 }).then(res => {
                 if(!res.data.success) return;
-                return true;
+               return true; 
             });
         }
     },
     mounted() {
-        setInterval(() => {
-            axios.post(`notifications?_batch=true&notifications_userid=${lStore.get('user_info').employee_id}`).then(res => {
+        this.realtimeData = setInterval(() => {
+            axios.post(`notifications?_batch=true&notifications_userid=${lStore.get('user_info').employee_id}&_orderedby=notifications__createdate_DESC`).then(res => {
                 if(!res.data.success) return;
-                this.notif = res.data.result.reverse();
+                this.notif = res.data.result;
+                this.totalNotif = Object.keys(this.notif).length;
             });
         }, 1000);
     },
@@ -69,6 +99,46 @@ export default defineComponent({
 </script>
 
 <style scoped>
+
+.scrollTopNotif {
+    position: fixed;
+    bottom: 15px;
+    right: 12px;
+    z-index: 9999;
+    display: block;
+    font-size: 35px;
+    color: #000;
+    display: none;
+}
+
+.sortNotif {
+    text-align: right;
+    margin: 10px 0 8px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.sortNotif ion-icon {
+    color: #92949c;
+}
+
+.sortNotif p {
+    margin: 0;
+}
+
+.sortNotif p:first-child {
+    font-size: 14px;
+    font-style: italic;
+    color: #999;
+}
+
+.showArrowNotif {
+    display: block;
+}
+
+.showArrowNotif a {
+    color: #000;
+}
 
 ion-menu ion-content ion-item ion-label {
     margin: 0;

@@ -37,7 +37,7 @@
                 <ion-datetime @ionChange="setDate" presentation="date"></ion-datetime>
             </ion-toolbar>
         </ion-header>
-        <ion-content fullscreen="true">
+        <ion-content id="schedules_content" fullscreen="true" @click="showArrowSchedules" @ionScroll="scrollTopSchedules($event)" scroll-events>
             <ion-refresher style="position:relative; z-index:999;" slot="fixed" @ionRefresh="handleRefresh($event)">
                 <ion-refresher-content refreshing-spinner="crescent"></ion-refresher-content>
             </ion-refresher>
@@ -62,6 +62,8 @@
                 </ion-item>
             </ion-list>
 
+            <a class="scrollTopSchedules" href="javascript:;"><ion-icon :icon="chevronUpCircle"></ion-icon></a>
+
         </ion-content>
     </ion-page>
 </template>
@@ -69,23 +71,21 @@
 <script>
 import { defineComponent } from 'vue';
 import { IonContent, IonPage, IonHeader, IonToolbar, IonDatetime, IonIcon,actionSheetController, IonTitle, IonButtons, IonRefresher, IonRefresherContent, IonButton, IonAvatar, IonLabel, IonItem, IonList } from '@ionic/vue';
-import { stopwatch, calendar, checkmarkDoneCircle, clipboard} from 'ionicons/icons';
+import { chevronUpCircle, calendar } from 'ionicons/icons';
 import { axios, lStore,dateFormat, openToast } from '@/functions';
 
 export default defineComponent({
     name: 'SchedulesView',
     components: { IonIcon,IonContent, IonPage, IonHeader, IonToolbar, IonDatetime, IonTitle, IonButtons, IonRefresher, IonRefresherContent, IonButton, IonAvatar, IonLabel, IonItem, IonList },
     setup() {
-        const logScrolling2 = (e) => {
-            if (e.detail.scrollTop >= 50) {
-                document.querySelector('ion-header').classList.add('hidden');
-                document.querySelector('.sub-header2').classList.add('hidden');
-            } else {                                                                                
-                document.querySelector('ion-header').classList.remove('hidden');
-                document.querySelector('.sub-header2').classList.remove('hidden');
+        const scrollTopSchedules = (env) => {
+            if(env.detail.scrollTop > 80) {
+                document.querySelector('.scrollTopSchedules').classList.add('showArrowSchedules');
+            }else {
+                document.querySelector('.scrollTopSchedules').classList.remove('showArrowSchedules');
             }
         }
-        return { logScrolling2 };
+        return { scrollTopSchedules, chevronUpCircle, calendar };
     },
     data() {
         return{
@@ -103,9 +103,7 @@ export default defineComponent({
             isOpen: false,
             openModal: false,
             openedSchedule:{},
-            allowedRoles:{},
-
-            stopwatch, calendar, checkmarkDoneCircle, clipboard
+            allowedRoles:{}
         }
     },
     created() {
@@ -135,13 +133,14 @@ export default defineComponent({
                 month:'2-digit',
                 day: '2-digit'
             }).replaceAll('/','-');
-            
-
 
         this.setDate(selectedDate);
     },
     methods: {
         dateFormat,
+        showArrowSchedules() {
+            document.getElementById('schedules_content').scrollToTop(1500);
+        },
         scheduleShowStatus(sched){
             if(sched.assignschedules_id == null) return false;
             if(sched.assignschedules_timeout != null) return [this.checkmarkDoneCircle,'Completed'];
@@ -244,7 +243,7 @@ export default defineComponent({
             }).replaceAll('/','-');
             
             
-            axios.post(`Schedule/joint?schedules_dates=${selectedDate}&_batch=true`).then(res=>{
+            axios.post(`Schedule/joint?schedules_dates=${selectedDate}&_batch=true&_orderedby=schedules__dates_DESC`).then(res=>{
                 if(res.data.result == null) {
                     this.schedulesToday = [];
                     return;
@@ -270,6 +269,21 @@ export default defineComponent({
 </script>
 
 <style scoped>
+
+.showArrowSchedules {
+    display: block !important;
+}
+
+.scrollTopSchedules {
+    position: fixed;
+    bottom: 15px;
+    right: 12px;
+    z-index: 9999;
+    display: block;
+    font-size: 35px;
+    color: #000;
+    display: none;
+}
 
 .page-title{text-align: center; font-weight: bold; font-size: 20px; margin: 0 0 12px;}
 
