@@ -44,9 +44,6 @@ export default {
 </script>
 
 <style scoped>
-ion-toolbar {
-    min-height: 88px;
-}
 
 ion-toolbar ion-buttons {
     margin: 0;

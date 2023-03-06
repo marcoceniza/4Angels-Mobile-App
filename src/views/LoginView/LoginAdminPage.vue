@@ -5,7 +5,7 @@
                 <span class="style-circle"></span>
                 <div class="form-header">
                     <img src="../../images/main_logo.png" alt="Logo"/>
-                    <p>Sign In <small>(Employee Login)</small></p>
+                    <p>Sign In <small>(Admin Login)</small></p>
                 </div>
                 <div class="form-input">
                     <ion-item>
@@ -20,13 +20,13 @@
                             <ion-icon :class="{ showIcon2 : !showIcon2 }" :icon="eyeOff"></ion-icon>
                         </a>
                     </ion-item>
-                    <ion-button class="ion-margin-top" expand="block" size="large" :disabled="formLoading" v-on:click="login">
+                    <ion-button color="danger" class="ion-margin-top" expand="block" size="large" :disabled="formLoading" v-on:click="login">
                         <span v-if="!formLoading" >LOGIN</span>
                         <span v-if="formLoading">
                             <ion-spinner name="dots"></ion-spinner>
                         </span>
                     </ion-button>
-                    <a class="loginLink" href="javascript:;" @click="$router.push('/loginadmin')">Login as Admin &raquo;</a>
+                    <a class="loginLink" href="javascript:;" @click="$router.push('/login')">Login as Employee &raquo;</a>
                 </div>
                 <ion-text class="privacy">By logging in, I agree to <strong>4Angels Healthcare Staffing</strong>'s <a @click="setOpen(true)" href="javascript:;">Terms of Service and Privacy Policy</a></ion-text>
             </div>
@@ -139,7 +139,7 @@ import { axios, validateForm, openToast, lStore } from '@/functions';
 import { eye, eyeOff, close } from 'ionicons/icons';
 
 export default defineComponent({
-    name: 'LoginPage',
+    name: 'LoginAdminPage',
     components: { IonContent, IonPage, IonText, IonItem, IonLabel, IonInput, IonButton, IonSpinner, IonModal, IonList, IonIcon, IonTitle, IonButtons, IonToolbar, IonHeader },
     data() {
         return{
@@ -170,23 +170,24 @@ export default defineComponent({
             
             this.formLoading = true;
 
-            axios.post('employee/login',null,{
+            axios.post('users/login',null,{
                 login: this.loginInput,
                 password: this.password
             }).catch(err=>{
                 console.log(err);
-                openToast('Something went wrong...', 'danger');
+                openToast('Something went wrong...', 'light');
             }).then(res=>{
-                if(res.data.msg === 'user not found') openToast('User not registered!', 'danger');
-                if(res.data.msg === 'wrong password') openToast('Wrong password!', 'danger');
+                if(res.data.msg === 'user not found') openToast('User not registered!', 'light');
+                if(res.data.msg === 'wrong password') openToast('Wrong password!', 'light');
                 this.formLoading = false;
                 
                 if(res.data.success) {
-                    lStore.set('user_id',res.data.result.employee_id);
+                    lStore.set('user_id',res.data.result.users_id);
                     lStore.set('user_token',res.data.token);
                     lStore.set('user_info', res.data.result);
-                    openToast('Login Success', 'primary');
-                    this.$router.replace('/employee/dashboard');
+                    lStore.set('user_type', '1');
+                    openToast('Login Success', 'light');
+                    this.$router.replace('/admin/reports');
                 }
             });
         },
@@ -244,7 +245,7 @@ ion-label h1 {
     content: '';
     width: 200px;
     height: 200px;
-    background: #138ed9;
+    background: #b3223d;
     position: absolute;
     border-radius: 50%;
     z-index: -1;
@@ -256,7 +257,7 @@ ion-label h1 {
     content: '';
     width: 200px;
     height: 200px;
-    background: #138ed9;
+    background: #b3223d;
     position: absolute;
     border-radius: 50%;
     z-index: -1;
@@ -311,7 +312,7 @@ ion-title {
     content: '';
     width: 100%;
     height: 370px;
-    background: #1f94db;
+    background: #aa0927;
     position: absolute;
     left: 0;
     top: 0;

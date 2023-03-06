@@ -12,6 +12,7 @@
 import { IonPage, IonContent, onIonViewDidEnter } from '@ionic/vue';
 import { lStore } from '@/functions';
 import router from '@/router';
+import { useRoute } from 'vue-router';
 
 export default ({
     components: {
@@ -29,16 +30,28 @@ export default ({
         };
     },
     setup() {
+        let route = useRoute();
         onIonViewDidEnter(() => {
-            if(!lStore.isset('user_token')) {
-                setTimeout(() => {
+            setTimeout(() => {
+                if(!lStore.isset('user_token')) {
                     router.push('/welcome');
-                }, 1500);
-            } else {
-                setTimeout(() => {
-                    router.replace('/employee/dashboard');
-                }, 1500);
-            }
+                }else if (!lStore.get('user_token')) {
+                    if (this.loginPaths.includes(route.path)) return;
+                    router.push('/login');
+                    router.push('/loginadmin');
+                }else if(lStore.isset('user_type') && lStore.get('user_type') == 1 && !route.path.includes('/admin/')){
+                    router.push('/admin/reports');
+                }
+            }, 1500);
+            // if(!lStore.isset('user_token')) {
+            //     setTimeout(() => {
+            //         router.push('/welcome');
+            //     }, 1500);
+            // } else {
+            //     setTimeout(() => {
+            //         router.replace('/employee/dashboard');
+            //     }, 1500);
+            // }
         });
     }
 });

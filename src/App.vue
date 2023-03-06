@@ -30,6 +30,7 @@ export default defineComponent({
         "/splash",
         "/welcome",
         "/login",
+        "/loginadmin",
       ],
       interval: null,
       alerted: true,
@@ -222,6 +223,9 @@ export default defineComponent({
       if (!lStore.get('user_token')) {
         if (this.loginPaths.includes(to)) return;
         router.push('/login');
+        router.push('/loginadmin');
+      }else if(lStore.isset('user_type') && lStore.get('user_type') == 1 && !this.$route.path.includes('/admin/')){
+        router.push('/admin/reports');
       }
     }
   },

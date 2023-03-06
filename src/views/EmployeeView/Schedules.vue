@@ -1,11 +1,11 @@
 <template>
     <ion-page>
-        <div class="Schedule_modal" :class="{openModal:openModal}">
-            <div class="Schedule_modal_box">
+        <div class="Schedule_modal" :class="{openModal:openModal != 0}">
+            <div class="Schedule_modal_box" v-if="openModal == 1">
                 <h2>{{openedSchedule.role_name}}</h2>
                 <div class="grid">
                     <p>Schedule ID:</p><div><span>{{openedSchedule.schedules_id}}</span></div>
-                    <p>Schedule Date:</p><div><span>{{dateFormat('%lm %d, %y','2022-01-01 '+openedSchedule.schedules_dates)}}</span></div>
+                    <p>Schedule Date:</p><div><span>{{dateFormat('%lm %d, %y',openedSchedule.schedules_dates)}}</span></div>
                     <p>Schedule Start:</p><div><span>{{dateFormat('%h:%i%a','2022-01-01 '+openedSchedule.schedules_timestart)}}</span></div>
                     <p>Schedule End:</p><div><span>{{dateFormat('%h:%i%a','2022-01-01 '+openedSchedule.schedules_timeend)}}</span></div>
                     <p>Branch:</p><div><span>{{openedSchedule.facility_name}}</span></div>
@@ -14,12 +14,62 @@
                     <p v-if="scheduleShowStatus(openedSchedule) != false">Status:</p><div><span>{{scheduleShowStatus(openedSchedule)[1]}}</span></div>
                 </div>
 
-                <ion-button expand="block" @click="openModal=false">Close</ion-button>
+                <ion-button expand="block" @click="openModal=0">Close</ion-button>
             </div>
-        </div>
 
-        <div class="request_change_modal" :class="{openModal:openModal}">
+            <div class="Schedule_modal_box" v-if="openModal == 2">
+                <h2>Reschedule Request - <span style="display:inline-block">{{openedSchedule.role_name}} Personnel</span></h2>
+                <div class="grid">
+                    <p>Schedule ID:</p><div><span>{{openedSchedule.schedules_id}}</span></div>
+                    <p>Schedule Date:</p><div><span>{{dateFormat('%lm %d, %y',openedSchedule.schedules_dates)}}</span></div>
+                    <p>Schedule Start:</p><div><span>{{dateFormat('%h:%i%a','2022-01-01 '+openedSchedule.schedules_timestart)}}</span></div>
+                    <p>Schedule End:</p><div><span>{{dateFormat('%h:%i%a','2022-01-01 '+openedSchedule.schedules_timeend)}}</span></div>
+                </div>
+                <div class="separator"></div>
+                <div class="grid">
+                    <p>Reschedule Date:</p><div><input type="date" v-model="openedSchedule.requests_resched_date"></div>
+                    <p>From:</p><div><input type="time" :value="openedSchedule.requests_resched_timestart" @input="autoEndTime"></div>
+                    <p>To:</p><div><input type="time" readonly v-model="openedSchedule.requests_resched_timeend"></div>
+                    <p>Reason</p><div><textarea v-model="openedSchedule.requests_reason" placeholder="Enter your reason here..." type="text"></textarea></div>
+                </div>
 
+                <div class="button_col2">
+                    <ion-button expand="block" @click="submitReschedRequest">Submit</ion-button>
+                    <ion-button expand="block" @click="openModal=0">Close</ion-button>
+                </div>
+            </div>
+
+            <div class="Schedule_modal_box" v-if="openModal == 3">
+                <h2>Reassign Request - <span style="display:inline-block">{{openedSchedule.role_name}}</span></h2>
+                <div class="grid">
+                    <p>Schedule ID:</p><div><span>{{openedSchedule.schedules_id}}</span></div>
+                    <p>Schedule Date:</p><div><span>{{dateFormat('%lm %d, %y',openedSchedule.schedules_dates)}}</span></div>
+                    <p>Schedule Start:</p><div><span>{{dateFormat('%h:%i%a','2022-01-01 '+openedSchedule.schedules_timestart)}}</span></div>
+                    <p>Schedule End:</p><div><span>{{dateFormat('%h:%i%a','2022-01-01 '+openedSchedule.schedules_timeend)}}</span></div>
+                </div>
+
+                <div class="separator"></div>
+                <strong>Please recommend an employee who is willing to take this schedule</strong>
+                <div class="employee_datalist">
+                    <input v-model="searchEmployee" placeholder="Select employee...">
+                    <ul>
+                        <li v-for="e,i in filterEmployees" :key="i" @click="openedSchedule.requests_reassign_employeeid = e.employee_id;searchEmployee = e.employee_firstname+' '+e.employee_lastname">
+                            <p>
+                                {{e.employee_firstname}} {{e.employee_lastname}}
+                            </p>
+                        </li>
+                    </ul>
+                </div>
+
+                <strong class="title">Reason</strong>
+
+                <textarea v-model="openedSchedule.requests_reason" placeholder="Enter your reason here..." type="text"></textarea>
+
+                <div class="button_col2">
+                    <ion-button expand="block" @click="submitReassignRequest">Submit</ion-button>
+                    <ion-button expand="block" @click="openModal=0">Close</ion-button>
+                </div>
+            </div>
         </div>
 
         <ion-header class="header" no-border collapse="fade">
@@ -37,7 +87,7 @@
                 <ion-datetime @ionChange="setDate" presentation="date"></ion-datetime>
             </ion-toolbar>
         </ion-header>
-        <ion-content id="schedules_content" fullscreen="true" @click="showArrowSchedules" @ionScroll="scrollTopSchedules($event)" scroll-events>
+        <ion-content fullscreen="true" scroll-events="true" class="scrollContent" @ionScroll="scrollTopContent($event)">
             <ion-refresher style="position:relative; z-index:999;" slot="fixed" @ionRefresh="handleRefresh($event)">
                 <ion-refresher-content refreshing-spinner="crescent"></ion-refresher-content>
             </ion-refresher>
@@ -62,7 +112,9 @@
                 </ion-item>
             </ion-list>
 
-            <a class="scrollTopSchedules" href="javascript:;"><ion-icon :icon="chevronUpCircle"></ion-icon></a>
+            <div class="scrollTop" v-show="showArrow" @click="clickToTop">
+                <ion-icon :icon="arrowUpCircle" size="large"></ion-icon>
+            </div>
 
         </ion-content>
     </ion-page>
@@ -71,29 +123,27 @@
 <script>
 import { defineComponent } from 'vue';
 import { IonContent, IonPage, IonHeader, IonToolbar, IonDatetime, IonIcon,actionSheetController, IonTitle, IonButtons, IonRefresher, IonRefresherContent, IonButton, IonAvatar, IonLabel, IonItem, IonList } from '@ionic/vue';
-import { chevronUpCircle, calendar } from 'ionicons/icons';
-import { axios, lStore,dateFormat, openToast } from '@/functions';
+import { stopwatch, calendar, checkmarkDoneCircle, clipboard, arrowUpCircle } from 'ionicons/icons';
+import { axios, lStore,dateFormat, openToast, validateForm } from '@/functions';
 
 export default defineComponent({
     name: 'SchedulesView',
     components: { IonIcon,IonContent, IonPage, IonHeader, IonToolbar, IonDatetime, IonTitle, IonButtons, IonRefresher, IonRefresherContent, IonButton, IonAvatar, IonLabel, IonItem, IonList },
     setup() {
-        const scrollTopSchedules = (env) => {
-            if(env.detail.scrollTop > 80) {
-                document.querySelector('.scrollTopSchedules').classList.add('showArrowSchedules');
-            }else {
-                document.querySelector('.scrollTopSchedules').classList.remove('showArrowSchedules');
-            }
+        const clickToTop = () => {
+            const scrollContent = document.querySelector('ion-content.scrollContent');
+            scrollContent.scrollToTop(1000);
         }
-        return { scrollTopSchedules, chevronUpCircle, calendar };
+
+        return { clickToTop };
     },
     data() {
         return{
-            cifile: 'https://www.4angelshc.com/mobile/filesystem/',
             formLoading1: false,
             task: null,
             message: null,
             schedulesToday:[],
+            cifile: 'https://www.4angelshc.com/mobile/filesystem/',
             takenSchedulesToday: [],
             noProfilePic: false,
             selectedDate:'2022-01-01',
@@ -101,21 +151,21 @@ export default defineComponent({
             facility: '',
             getMonthToday: '',
             isOpen: false,
-            openModal: false,
+            openModal: 0,
             openedSchedule:{},
-            allowedRoles:{}
+            allowedRoles:{},
+            showArrow: false,
+            searchEmployee:'',
+            employees:[],
+
+            stopwatch, calendar, checkmarkDoneCircle, clipboard, arrowUpCircle
         }
     },
     created() {
         this.user = lStore.get('user_info');
+        this.path = this.cifile+this.user.employee_id;
     },
     mounted() {
-        const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-        let month = months[new Date().getMonth()].toUpperCase();
-        this.getMonthToday = month;
-
-
-        
         let date = new Date().toLocaleDateString();
         date = date.split('/')[2]+'-'+date.split('/')[0]+'-'+date.split('/')[1];
         this.selectedDate = date;
@@ -133,13 +183,169 @@ export default defineComponent({
                 month:'2-digit',
                 day: '2-digit'
             }).replaceAll('/','-');
-
+            
         this.setDate(selectedDate);
+    },
+    computed:{
+        filterEmployees(){
+            let filtered = this.employees.filter(el=>{
+                let name1 = el.employee_lastname+' '+el.employee_firstname;
+                let name2 = el.employee_firstname+' '+el.employee_lastname;
+                return (
+                    ((name1.toLowerCase().includes(this.searchEmployee.toLowerCase()) ||
+                    name2.toLowerCase().includes(this.searchEmployee.toLowerCase())) ||
+                    this.searchEmployee == '') && el.assigndesignation_roleid == this.openedSchedule.schedules_roleid
+                );
+            });
+            return filtered;
+        }
     },
     methods: {
         dateFormat,
-        showArrowSchedules() {
-            document.getElementById('schedules_content').scrollToTop(1500);
+        fetchEmployees(facilityId){
+            console.log(facilityId);
+            axios.post(`UserDesignations?
+            assigndesignation_facilityid=${facilityId}
+            &_batch=true
+            &_joins=employee,role
+            &_on=
+            employee.employee_id=assigndesignation.assigndesignation_employeeid,
+            role.role_id=assigndesignation.assigndesignation_roleid`)
+            .then(res=>{
+                // res.data = axios.decryptToJSON(res.data);
+                // if(!res.data) return;
+                this.employees = res.data.result
+
+                console.log(this.employees);
+            });
+        },
+        async submitReassignRequest(){
+            let schedStart = new Date(this.openedSchedule.schedules_dates+' '+this.openedSchedule.schedules_timestart);
+            let curDateTime = new Date();
+            console.log(schedStart,curDateTime,curDateTime.getTime() >= schedStart.getTime());
+            if(curDateTime.getTime() >= schedStart.getTime()) {
+                openToast('You cannot request to reschedule a schedule that has started already!','warning');
+                return;
+            }
+
+            let valid = validateForm(this.openedSchedule,{
+                requests_reassign_employeeid:"required"
+            });
+
+            if(!valid.allValid){
+                openToast('Please select an employee!','danger');
+                return;
+            }
+
+            const openSheet = await actionSheetController.create({
+                header: 'Confirm Reassign Request?',
+                buttons: [
+                    { text: 'Yes',  data: {action: 'apply'}},
+                    { text: 'No',   role: 'cancel',    data: {action: 'cancel'}}
+                ],
+            });
+
+            await openSheet.present();
+            openSheet.onDidDismiss().then(res=>{
+                if(res.data.action != 'apply') return;
+
+                axios.post(`requests?requests_type=2&requests_employeeid=${lStore.get('user_id')}&requests_schedulesid=${this.openedSchedule.schedules_id}&_orderby=id_DESC`).then(res=>{
+                    // if(res.data.result != null && new Date(res.data.result.requests_created_at).toLocaleDateString() == new Date().toLocaleDateString()){
+                    if(res.data.result != null){
+                        openToast('You can only do one reassign request per schedule!','danger');
+                        return;
+                    }
+
+                    axios.post('requests/create',null,{
+                        requests_type: 2,
+                        requests_employeeid : lStore.get('user_id'),
+                        requests_schedulesid : this.openedSchedule.schedules_id,
+                        requests_reassign_employeeid: this.openedSchedule.requests_reassign_employeeid,
+                        requests_reason: this.openedSchedule.requests_reason ?? '',
+                        requests_created_at: new Date().toLocaleString('zh-Hans-CN').replaceAll('-',''),
+                        requests_updated_at: new Date().toLocaleString('zh-Hans-CN').replaceAll('-','')
+                    }).then(()=>{
+                        window.location.reload();
+                    })
+                })
+            });
+
+        },
+        async submitReschedRequest(){
+            let schedStart = new Date(this.openedSchedule.schedules_dates+' '+this.openedSchedule.schedules_timestart);
+            let curDateTime = new Date();
+            console.log(schedStart,curDateTime,curDateTime.getTime() >= schedStart.getTime());
+            if(curDateTime.getTime() >= schedStart.getTime()) {
+                openToast('You cannot request to reschedule a schedule that has started already!','warning');
+                return;
+            }
+
+            let valid = validateForm(this.openedSchedule,{
+                requests_resched_date:"required",
+                requests_resched_timestart: "required",
+                requests_resched_timeend: "required"    
+            });
+            
+            if(!valid.allValid){
+                openToast('All fields are required!','danger');
+                return;
+            }
+
+            if(new Date(this.openedSchedule.requests_resched_date+' '+this.openedSchedule.requests_resched_timestart) < new Date()){
+                openToast('The reschedule datetime should be later than the current datetime!','danger');
+                return;
+            }
+
+            const openSheet = await actionSheetController.create({
+                header: 'Confirm Reschedule Request?',
+                buttons: [
+                    { text: 'Yes',  data: {action: 'apply'}},
+                    { text: 'No',   role: 'cancel',    data: {action: 'cancel'}}
+                ],
+            });
+
+            await openSheet.present();
+            openSheet.onDidDismiss().then(res=>{
+                if(res.data.action != 'apply') return;
+
+                axios.post(`requests?requests_type=1&requests_employeeid=${lStore.get('user_id')}&requests_schedulesid=${this.openedSchedule.schedules_id}&_orderby=id_DESC`).then(res=>{
+                    // if(res.data.result != null && new Date(res.data.result.requests_created_at).toLocaleDateString() == new Date().toLocaleDateString()){
+                    if(res.data.result != null){
+                        openToast('You can only do one reschedule request per schedule!','danger');
+                        return;
+                    }
+
+                    axios.post('requests/create',null,{
+                        requests_type: 1,
+                        requests_employeeid : lStore.get('user_id'),
+                        requests_schedulesid : this.openedSchedule.schedules_id,
+                        requests_resched_date: this.openedSchedule.requests_resched_date,
+                        requests_resched_timestart: this.openedSchedule.requests_resched_timestart,
+                        requests_resched_timeend: this.openedSchedule.requests_resched_timeend,
+                        requests_reason: this.openedSchedule.requests_reason ?? '',
+                        requests_created_at: new Date().toLocaleString('zh-Hans-CN').replaceAll('-',''),
+                        requests_updated_at: new Date().toLocaleString('zh-Hans-CN').replaceAll('-','')
+                    }).then(()=>{
+                        window.location.reload();
+                    })
+                })
+            });
+        },
+        autoEndTime(e){
+            this.openedSchedule.requests_resched_timestart = e.target.value;
+            
+            let difference = new Date('2001-01-01 '+this.openedSchedule.schedules_timeend).getTime() - new Date('2001-01-01 '+this.openedSchedule.schedules_timestart).getTime();
+            let newEndTime = new Date('2001-01-01 '+e.target.value);
+            newEndTime.setTime(newEndTime.getTime()+difference);
+
+            this.openedSchedule.requests_resched_timeend = newEndTime.toLocaleTimeString('zh-Hans-CN',{hour12:false,hour:'2-digit',minute:'2-digit'});
+        },
+        scrollTopContent(evn) {
+            if(evn.detail.scrollTop >= 100) {
+                this.showArrow = true;
+            } else {
+                this.showArrow = false;
+            }
         },
         scheduleShowStatus(sched){
             if(sched.assignschedules_id == null) return false;
@@ -175,14 +381,20 @@ export default defineComponent({
                     }
                 });
             }
-            // else{
-            //     actionSheetButtons.push({
-            //         text: 'Request Change',
-            //         data: {
-            //             action: 'request change',
-            //         }
-            //     });
-            // }
+            else{
+                actionSheetButtons.push({
+                    text: 'Request to Reschedule',
+                    data: {
+                        action: 'request reschedule',
+                    }
+                });
+                actionSheetButtons.push({
+                    text: 'Request to Reassign',
+                    data: {
+                        action: 'request reassign',
+                    }
+                });
+            }
 
             const openSheet = await actionSheetController.create({
                 header: 'Schedule Action',
@@ -196,23 +408,40 @@ export default defineComponent({
                 if(res.data.action == 'apply') {
                     let schedStart = new Date(selectedSched.schedules_dates+' '+selectedSched.schedules_timestart);
                     let curDateTime = new Date();
-                    console.log(schedStart,curDateTime,curDateTime.getTime() >= schedStart.getTime());
                     if(curDateTime.getTime() >= schedStart.getTime()) {
-                        openToast('You cannot apply for a schedule that\'s already finished!','warning');
+                        openToast('You cannot apply for a schedule that\'s already started!','warning');
                         return;
                     }
 
-                    axios.post('Assign/create',null,{
-                        assignschedules_assigndesignationid: this.allowedRoles[selectedSched.schedules_facilityid].assigndesignation_id,
-                        assignschedules_scheduleid: selectedSched.schedules_id,
-                        assignschedules_status: 10
-                    }).then(()=>{
-                        window.location.reload();
+                    axios.post(`requests?requests_type=0&requests_employeeid=${lStore.get('user_id')}&requests_schedulesid=${selectedSched.schedules_id}&_orderby=id_DESC`).then(res=>{  
+                        
+                        if(res.data.result != null){
+                            openToast('You already applied for this schedule!','danger');
+                            return;
+                        }
+
+                        axios.post('requests/create',null,{
+                            requests_type: 0,
+                            requests_employeeid : lStore.get('user_id'),
+                            requests_schedulesid : selectedSched.schedules_id,
+                            requests_created_at: new Date().toLocaleString('zh-Hans-CN').replaceAll('-',''),
+                            requests_updated_at: new Date().toLocaleString('zh-Hans-CN').replaceAll('-','')
+                        }).then(()=>{
+                            window.location.reload();
+                        })
                     })
                     
                 }else if(res.data.action == 'view'){
-                    this.openedSchedule = selectedSched;
-                    this.openModal = true;
+                    this.openedSchedule = JSON.parse(JSON.stringify(selectedSched));
+                    this.openModal = 1;
+                }else if(res.data.action == 'request reschedule'){
+                    this.openedSchedule = JSON.parse(JSON.stringify(selectedSched));
+                    this.openModal = 2;
+                }else if(res.data.action == 'request reassign'){
+                    this.fetchEmployees(selectedSched.schedules_facilityid)
+                    this.openedSchedule = JSON.parse(JSON.stringify(selectedSched));
+                    this.openModal = 3;
+                    
                 }
             });
 
@@ -243,7 +472,7 @@ export default defineComponent({
             }).replaceAll('/','-');
             
             
-            axios.post(`Schedule/joint?schedules_dates=${selectedDate}&_batch=true&_orderedby=schedules__dates_DESC`).then(res=>{
+            axios.post(`Schedule/joint?schedules_dates=${selectedDate}&_batch=true`).then(res=>{
                 if(res.data.result == null) {
                     this.schedulesToday = [];
                     return;
@@ -270,22 +499,15 @@ export default defineComponent({
 
 <style scoped>
 
-.showArrowSchedules {
-    display: block !important;
-}
-
-.scrollTopSchedules {
-    position: fixed;
-    bottom: 15px;
-    right: 12px;
-    z-index: 9999;
-    display: block;
-    font-size: 35px;
-    color: #000;
-    display: none;
-}
-
 .page-title{text-align: center; font-weight: bold; font-size: 20px; margin: 0 0 12px;}
+
+.scrollTop{
+    position: fixed;
+    z-index: 1;
+    bottom: 12px;
+    right: 12px;
+    cursor: pointer;
+}
 
 .noData{width: 230px; max-width: 100%; margin: 30px auto 0;}
 
@@ -330,12 +552,6 @@ ion-header.hidden {
     z-index: 1;
 }
 
-.sub-header ion-card {
-    margin: 0 auto 8px; 
-    padding: 15px 0;
-    border-radius: 25px;
-}
-
 .sub-header.hidden {
     top: -250px;
 }
@@ -354,35 +570,12 @@ ion-datetime {
 
 ion-title {
     --text-align: left !important; 
-    font-size: 21px; 
+    font-size: 20px; 
     --padding: 0 !important;
 }
 
 ion-title span {
     display: block;
-    color: #1f94db;
-    font-weight: bold;
-}
-
-ion-text h3 {
-    font-size: 18px;
-    margin: 0;
-}
-
-ion-card {
-    margin: 24px auto;
-}
-
-ion-card img {
-    display: table;
-    width: 100%;
-    max-width: 200px;
-    height: 100%;
-    object-fit: contain;
-    margin: auto;
-}
-
-ion-card-subtitle {
     color: #1f94db;
     font-weight: bold;
 }
@@ -415,50 +608,6 @@ ion-list ion-item {
 
 ion-list ion-item:nth-child(even) {
     border-left: 6px solid #1f94db  ;
-}
-
-ion-toolbar ion-text {
-    text-align: center;
-    display: block;
-    margin: 0 auto;
-}
-
-ion-text h2 {
-    font-size: 17px; 
-    padding-left: 14px;
-}
-
-ion-text h2 {
-    font-size: 15px;
-    padding-left: 14px;
-    color: #4daca8;
-    font-weight: 600;
-    margin: 0 ;
-}
-
-ion-text h2 span {
-    display: block;
-}
-
-ion-text h2 small {
-    font-size: 10px;
-}
-
-ion-select {
-    width: 100%;
-}
-
-.facility_wrap {
-    border-radius: 20px;
-}
-
-.logout-icon {
-    position: absolute;
-    top: 35px;
-    right: 12px;
-    font-size: 25px;
-    color: #fff;
-    display: block;
 }
 
 .schedTaken ion-item{
@@ -575,4 +724,64 @@ ion-select {
     margin: 10px 0;
 }
 .schedStatus i {vertical-align: text-top;}
+
+.Schedule_modal_box input,.Schedule_modal_box textarea{
+    background: #edf8ff;
+    border: none;
+    border-bottom-color: currentcolor;
+    border-bottom-style: none;
+    border-bottom-width: medium;
+    padding: 7px;
+    line-height: 1.5;
+    color: #555;
+    font-size: 15px;
+    width: 100%;
+    display: block;
+    border-radius: 10px;
+    border-bottom: 1px solid #c0e7ff;
+}
+
+.button_col2{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    margin: 5px;
+}
+
+.Schedule_modal_box .separator{
+    height: 1px;
+    border-top:1px solid #ddd;
+    margin: 20px 0;
+}
+
+.Schedule_modal_box strong.title{
+    margin: 0 0 10px;
+    display: block;
+}
+
+.employee_datalist{margin:20px 0 10px}
+.employee_datalist input{
+    background: #edf8ff;
+    border:none;
+    border-bottom: 1px solid #c0e7ff;
+    padding: 7px;
+    line-height: 1.5;
+    color: #555;
+    font-size: 15px;
+    width: 100%;
+    display: block;
+    border-radius: 10px;
+}
+
+
+.employee_datalist ul{padding-left: 0;list-style: none;}
+.employee_datalist ul li{
+    padding: 10px;
+    border: 1px solid #bbb;
+    margin: 5px;
+    border-radius: 5px;
+    transition: 0.2s;
+}
+
+.employee_datalist ul li:active{scale:0.95}
+.employee_datalist ul li p{margin-block: 0;}
 </style>

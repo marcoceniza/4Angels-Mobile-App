@@ -14,8 +14,12 @@ import SchedulesView from '@/views/EmployeeView/Schedules.vue';
 import TimeClockOut from '@/views/EmployeeView/TimeClockOutView.vue';
 import NotificationsView from '@/views/EmployeeView/Notifications.vue';
 import TimesheetsView from '@/views/EmployeeView/Timesheets.vue';
+import ViewReports from '@/views/AdminView/ViewReports.vue';
+import ManageRequest from '@/views/AdminView/ManageRequest.vue';
+import AdminTabs from '@/views/AdminView/AdminTabs.vue';
+import LoginAdminPage from '@/views/LoginView/LoginAdminPage.vue';
 
-const routes = [
+export const routes = [
   {
     path: '/',
     redirect: '/splash'
@@ -25,7 +29,7 @@ const routes = [
     name: 'SplashScreenView',
     component: SplashScreenView,
     beforeEnter: (to, from) => {
-      if (from.path === '/welcome' || from.path === '/employee' || from.path === '/employee/dashboard'){return false;}
+      if (from.path === '/welcome'){return false;}
     }
   },
   {
@@ -36,6 +40,7 @@ const routes = [
       if (lStore.isset('user_token')) return false;
     }
   },
+  {path: '/loginadmin', name: 'LoginAdminPage', component: LoginAdminPage},
   {path: '/login', name: 'LoginPage', component: LoginPage},
   {path: '/:pathMatch(.*)*', name: 'ErrorPage', component: ErrorPage},
   {
@@ -73,6 +78,26 @@ const routes = [
       {
         path: '/employee/profile',
         component: EmployeeProfile,
+        beforeEnter: () => {
+          if (!lStore.isset('user_token')) return '/login';
+        },
+      },
+    ],
+  },
+  {
+    path: '/admin',
+    component: AdminTabs,
+    children: [
+      {
+        path: '/admin/reports',
+        component: ViewReports,
+        beforeEnter: () => {
+          if (!lStore.isset('user_token')) return '/login';
+        },
+      },
+      {
+        path: '/admin/request',
+        component: ManageRequest,
         beforeEnter: () => {
           if (!lStore.isset('user_token')) return '/login';
         },

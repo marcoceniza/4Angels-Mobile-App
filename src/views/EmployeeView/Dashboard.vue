@@ -58,11 +58,11 @@
                 </ion-text>
                 <div v-if="upcoming.length != 0">
                     <div class="mt" v-for="upSchedule in upcoming" :key="upSchedule.assigndesignation_employeeid">
-                        <ion-card button="true" @click="ReadyToClockin(upSchedule.schedules_id,new Date().toLocaleTimeString())">
+                        <ion-card>
                             <ion-card-header>
                                 <div class="d-flex">
                                     <div>
-                                        <ion-card-title>{{ new Date(upSchedule.schedules_dates+' '+upSchedule.schedules_timestart).toLocaleTimeString() }} - {{ new Date(upSchedule.schedules_dates+' '+upSchedule.schedules_timeend).toLocaleTimeString() }}</ion-card-title>
+                                        <ion-card-title>{{ new Date(upSchedule.schedules_dates+' '+upSchedule.schedules_timestart).toLocaleTimeString('en-US', { hour12: true, hour: "2-digit", minute: "2-digit" }) }} - {{ new Date(upSchedule.schedules_dates+' '+upSchedule.schedules_timeend).toLocaleTimeString('en-US', { hour12: true, hour: "2-digit", minute: "2-digit" }) }}</ion-card-title>
                                         <ion-card-subtitle>{{ upSchedule.role_name }}</ion-card-subtitle>
                                     </div>
                                     <div>
@@ -74,6 +74,7 @@
                                 <p>Facility: {{ upSchedule.facility_name }}</p>
                                 <p>Schedule Description: {{ upSchedule.schedules_description }}</p>
                             </ion-card-content>
+                            <ion-button class="ion-margin" @click="ReadyToClockin(upSchedule.schedules_id,new Date().toLocaleTimeString())" expand="block">Clock In</ion-button>
                         </ion-card>
                     </div>
                 </div>
@@ -82,14 +83,15 @@
                         <ion-text color="secondary">
                             <img class="noData" src="@/images/noData.svg" alt="No Data">
                             <h3>No schedule assigned to you today</h3>
+                            <ion-button class="ion-margin-top" color="light" @click="$router.push('/employee/schedules')">Check Schedule &raquo;</ion-button>
                         </ion-text>
                     </div>
                 </div>
                 </div>
                 <div v-else>
-                    <div class="mt">
+                    <div>
                         <ion-card-header>
-                            <h2 class="clock_title">You clockin at <span> {{ timein }}</span></h2>
+                            <h2 class="clock_title">Schedule Information</h2>
                             <ion-card-title>{{ dateFormat('%h:%i%a', current.schedules_dates+' '+current.schedules_timestart) }} - {{ dateFormat('%h:%i%a', current.schedules_dates+' '+current.schedules_timeend) }}</ion-card-title>
                             <ion-card-subtitle>{{ current.role_name }}</ion-card-subtitle>
                         </ion-card-header>

@@ -4,27 +4,38 @@
         <ion-header class="ion-head">
         </ion-header>
         <ion-content fullscreen="true" id="main-content" scroll-events="true">
-            <ion-text class="ion-padding-start ion-margin-top" color="primary">You will clockin at {{ timers }} on facility  {{ readytoclockinsched.facility_name }} {{ new Date(readytoclockinsched.schedules_dates+' '+readytoclockinsched.schedules_timestart).toLocaleTimeString() }} - {{ new Date(readytoclockinsched.schedules_dates+' '+readytoclockinsched.schedules_timeend).toLocaleTimeString() }}</ion-text>
-            <div class="avatar_wrap">
-                <p>Please provide a selfie</p>
-                <img :src="readytoclockinsched.assignschedules_clockinselfie" v-if="readytoclockinsched.assignschedules_clockinselfie != 'https://www.4angelshc.com/mobile/filesystem/' && readytoclockinsched.assignschedules_clockinselfie != null"/>
-                <img src="../../images/profile.svg" v-else/>
-                <ion-buttons class="camera-icon">
-                    <ion-icon :icon="camera" @click="setProfileImg"></ion-icon>
-                </ion-buttons>
-                <ion-button @click="ClockIn">Continue &raquo;</ion-button>
-            </div>
+
+            <ion-list lines="full">
+                <ion-list-header color="danger">
+                    <ion-label><ion-icon :icon="informationCircle"></ion-icon> Clockin Information</ion-label>
+                </ion-list-header>
+                <ion-item>
+                    <ion-label color="medium"><span>Time Clockin:</span> {{ timers }}</ion-label>
+                </ion-item>
+                <ion-item>
+                    <ion-label color="medium"><span>Date:</span> {{ new Date(readytoclockinsched.schedules_dates).toLocaleDateString() }}</ion-label>
+                </ion-item>
+                <ion-item>
+                    <ion-label color="medium"><span>Time Schedules:</span> {{ new Date(readytoclockinsched.schedules_dates+' '+readytoclockinsched.schedules_timestart).toLocaleTimeString('en-US', { hour12: true, hour: "2-digit", minute: "2-digit" }) }} - {{ new Date(readytoclockinsched.schedules_dates+' '+readytoclockinsched.schedules_timeend).toLocaleTimeString('en-US', { hour12: true, hour: "2-digit", minute: "2-digit" }) }}</ion-label>
+                </ion-item>
+                <ion-item>
+                    <ion-label color="medium"><span>Facility:</span> {{ readytoclockinsched.facility_name }}</ion-label>
+                </ion-item>
+            </ion-list>
+
+            <ion-button class="ion-margin-top" expand="block" @click="ClockIn">Continue &raquo;</ion-button>
+
         </ion-content>
     </ion-page>
 </template>
 <script>
 import { defineComponent } from 'vue';
-import { IonContent, IonPage, IonHeader, IonText,IonIcon,IonButtons,IonButton,actionSheetController } from '@ionic/vue';
-import { apps, map, chatbox, settings, ticket, helpCircle, logOut, alertCircle, warning, menu, reader, checkmarkCircle, location, time, calendar, calendarClear, navigate, person, timerOutline,camera } from 'ionicons/icons';
+import { IonContent, IonPage, IonHeader,actionSheetController, IonList, IonLabel, IonItem, IonButton, IonIcon, IonListHeader } from '@ionic/vue';
 import { lStore, axios, formatDateString,ImageDataConverter,openToast,calcFlyDist } from '@/functions';
 import axiosA from 'axios';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import BackButton from '@/views/BackButton';
+import { informationCircle } from 'ionicons/icons';
 import { defineCustomElements } from '@ionic/pwa-elements/loader';
 import { Geolocation } from '@capacitor/geolocation';
 defineCustomElements(window);
@@ -32,7 +43,7 @@ defineCustomElements(window);
 
 export default defineComponent({
     name: 'DashboardView',
-    components: { IonContent, IonPage, IonHeader, IonText,BackButton,IonIcon,IonButtons,IonButton },
+    components: { IonContent, IonPage, IonHeader,BackButton, IonList, IonLabel, IonItem, IonButton, IonIcon, IonListHeader },
     setup() {
         const logScrolling = (e) => {
             if (e.detail.scrollTop >= 20) {
@@ -41,7 +52,7 @@ export default defineComponent({
                 document.querySelector('.ion-head').classList.remove('ion-head-style');
             }
         }
-        return { camera,apps, map, chatbox, settings, ticket, helpCircle, logOut, alertCircle, menu, warning, logScrolling, reader,timerOutline, checkmarkCircle, location, time, calendar, calendarClear, navigate, person };
+        return { logScrolling, informationCircle };
     },
     data() {
         return{
@@ -49,8 +60,10 @@ export default defineComponent({
             timers: lStore.get('time'),
         }
     },
+     mounted() {
+        this.timers = new Date().toLocaleTimeString('en-US', { hour12: true, hour: "2-digit", minute: "2-digit" });
+     },
     created() {
-        
         let currentDate = new Date();
         let currentDateString = currentDate.toLocaleDateString().split('/');
         currentDateString = formatDateString(currentDateString[2] + '-' + currentDateString[0] + '-' + currentDateString[1]).replaceAll(' ','');
@@ -127,10 +140,7 @@ export default defineComponent({
                         this.loadImage = true;
                         let userFromLStore = this.readytoclockinsched;
                         userFromLStore.assignschedules_clockinselfie = image.dataUrl;
-                        openToast('Successfully Added Image', 'primary')
-                        // setTimeout(()=>{
-                        //     this.$router.go(0);
-                        // },2000);
+                        openToast('Successfully Added Image', 'light');
                     })
                 }
 
@@ -140,46 +150,34 @@ export default defineComponent({
         },
         async ClockIn()
         {
-            if(this.readytoclockinsched.assignschedules_clockinselfie == 'https://www.4angelshc.com/mobile/filesystem/' || this.readytoclockinsched.assignschedules_clockinselfie == null || this.readytoclockinsched.assignschedules_clockinselfie == '')
+            const coordinates = await Geolocation.getCurrentPosition({enableHighAccuracy:true});
+            if(calcFlyDist([this.readytoclockinsched.facility_location_long,this.readytoclockinsched.facility_location_lat],[coordinates.coords.longitude,coordinates.coords.latitude]) <= 0.2)
             {
-                openToast('Please provide a Clockin selfie', 'danger');
-                return;
-            }
-            else{
-                const coordinates = await Geolocation.getCurrentPosition({enableHighAccuracy:true});
-                if(calcFlyDist([this.readytoclockinsched.facility_location_long,this.readytoclockinsched.facility_location_lat],[coordinates.coords.longitude,coordinates.coords.latitude]) <= 0.2)
-                {
-                    let ClockinTime = new Date(new Date().toLocaleDateString()+' '+lStore.get('time')).toLocaleTimeString('zh-Hans-CN');
-                    console.log(ClockinTime)
-                    await axios.post('assign/update?id='+this.readytoclockinsched.assignschedules_id,null,{ assignschedules_timein: ClockinTime, assignschedules_status: 2,assignschedules_timeinlocationname: await this.mapFind(coordinates.coords.longitude,coordinates.coords.latitude), assignschedules_timeinlong: coordinates.coords.longitude, assignschedules_timeinlat: coordinates.coords.latitude})
+                let ClockinTime = new Date(new Date().toLocaleDateString()+' '+lStore.get('time')).toLocaleTimeString('zh-Hans-CN');
+                console.log(ClockinTime)
+                await axios.post('assign/update?id='+this.readytoclockinsched.assignschedules_id,null,{ assignschedules_timein: ClockinTime, assignschedules_status: 2,assignschedules_timeinlocationname: await this.mapFind(coordinates.coords.longitude,coordinates.coords.latitude), assignschedules_timeinlong: coordinates.coords.longitude, assignschedules_timeinlat: coordinates.coords.latitude})
 
-                    if(new Date(this.readytoclockinsched.schedules_dates+' '+ClockinTime).getTime() <= new Date(this.readytoclockinsched.schedules_dates+' '+this.readytoclockinsched.schedules_timestart).getTime()) // Clock in On Time
-                    {
-                        axios.post('assign/update?id='+this.readytoclockinsched.assignschedules_id,null,{assignschedules_status: 6}).then(()=>{
-                            openToast('Successfully Clockin', 'primary')
-                            this.$router.push('employee/dashboard');
-                        })
-                    }
-                    if(new Date(this.readytoclockinsched.schedules_dates+' '+ClockinTime).getTime() > (new Date(this.readytoclockinsched.schedules_dates+' '+this.readytoclockinsched.schedules_timestart).getTime()+1*60000)) // Clock in Late
-                    {
-                        axios.post('assign/update?id='+this.readytoclockinsched.assignschedules_id,null,{ assignschedules_timein: ClockinTime, assignschedules_status: 7,assignschedules_timeinlocationname: await this.mapFind(coordinates.coords.longitude,coordinates.coords.latitude), assignschedules_timeinlong: coordinates.coords.longitude, assignschedules_timeinlat: coordinates.coords.latitude}).then(()=>{
-                            openToast('Successfully Clockin', 'primary')
-                            this.$router.push('employee/dashboard');
-                        })
-                    }
-                    // if(new Date(this.readytoclockinsched.schedules_dates+' '+ClockinTime).getTime() > (new Date(this.readytoclockinsched.schedules_dates+' '+this.readytoclockinsched.schedules_timestart).getTime()+1*60000) && this.readytoclockinsched.assignschedules_status != 2 && this.readytoclockinsched.assignschedules_timein == null ) // Missing Clockin
-                    // {
-                    //     axios.post('assign/update?id='+this.readytoclockinsched.assignschedules_id,null,{ assignschedules_timein: ClockinTime, assignschedules_status: 8,assignschedules_timeinlocationname: await this.mapFind(coordinates.coords.longitude,coordinates.coords.latitude), assignschedules_timeinlong: coordinates.coords.longitude, assignschedules_timeinlat: coordinates.coords.latitude}).then(()=>{
-                    //         openToast('Successfully Clockin', 'primary')
-                    //         this.$router.push('employee/dashboard');
-                    //     })
-                    // }
-                }
-                else
+                if(new Date(this.readytoclockinsched.schedules_dates+' '+ClockinTime).getTime() <= new Date(this.readytoclockinsched.schedules_dates+' '+this.readytoclockinsched.schedules_timestart).getTime()) // Clock in On Time
                 {
-                    openToast('You need to be near on the facility to clockin', 'danger');
-                    return;
+                    axios.post('assign/update?id='+this.readytoclockinsched.assignschedules_id,null,{assignschedules_status: 6}).then(()=>{
+                        openToast('Successfully Clockin', 'light')
+                        this.$router.push('employee/dashboard');
+                    })
                 }
+                if(new Date(this.readytoclockinsched.schedules_dates+' '+ClockinTime).getTime() > (new Date(this.readytoclockinsched.schedules_dates+' '+this.readytoclockinsched.schedules_timestart).getTime()+1*60000)) // Clock in Late
+                {
+                    axios.post('assign/update?id='+this.readytoclockinsched.assignschedules_id,null,{ assignschedules_timein: ClockinTime, assignschedules_status: 7,assignschedules_timeinlocationname: await this.mapFind(coordinates.coords.longitude,coordinates.coords.latitude), assignschedules_timeinlong: coordinates.coords.longitude, assignschedules_timeinlat: coordinates.coords.latitude}).then(()=>{
+                        openToast('Successfully Clockin', 'light');
+                        setTimeout(()=>{
+                            this.$router.push('employee/dashboard');
+                        },3000);
+                    })
+                }
+            }
+            else
+            {
+                openToast('You need to be near on the facility to clockin', 'danger');
+                return;
             }
         },
         async mapFind(long,lat){
@@ -192,6 +190,30 @@ export default defineComponent({
 </script>
 
 <style scoped>
+
+ion-list-header {
+    padding: 0 0 0 15px;
+    font-size: 20px;
+}
+
+ion-list-header ion-label {
+    margin: 10px 0 12px;
+}
+
+ion-list-header ion-label ion-icon {
+    position: relative;
+    top: 6px;
+    font-size: 25px;
+}
+
+ion-item ion-label span {
+    color:#555; font-weight:bold;
+}
+
+ion-list {
+    background: #fff;
+}
+
 .mt{
     margin-top: 15px;
 }
@@ -271,41 +293,12 @@ ion-text p {
     font-size: 50px;
 }
 
-.main-header {
-    position: relative;
-    z-index: 2;
-}
-
-.sub-header {
-    position: relative;
-    top: 0;
-    --padding-top: 0;
-    transition: top ease-in-out 500ms;
-    z-index: 1;
-    border-radius: 0 0 30px 30px;
-}
-
-.sub-header ion-card {
-    margin: 0 auto 8px; 
-    padding: 15px 0;
-    border-radius: 25px;
-}
-
-.sub-header.hidden {
-    top: -200px;
-}
-
 ion-header {
     box-shadow: none;
 }
 
 ion-header::after {
     display: none;
-}
-
-ion-text h3 {
-    font-size: 18px;
-    margin: 0;
 }
 
 ion-item p {
@@ -324,57 +317,10 @@ ion-list {
     border-radius: 12px;
 }
 
-.approved {
-    font-size: 13px;
-    font-weight: bold;
-    color: #999;
-}
-
-.approved ion-icon {
-    position: relative;
-    top: 2px;
-    left: 1px;
-}
-
 ion-toolbar p {
     margin: 4px 0 0;
     font-size: 12px;
     color: #fff;
-}
-
-ion-title {
-    color: #fff;
-}
-
-.avatar_wrap {
-    position: relative;
-}
-
-.avatar_wrap p {
-    text-align: center;
-    color: #555;
-    margin: 30px 0 15px;
-}
-
-.avatar_wrap img {
-    width: 200px;
-    margin: 0 auto;
-    display: block;
-}
-
-.avatar_wrap ion-icon {
-    position: absolute;
-    right: 85px;
-    bottom: 0;
-    font-size: 25px;
-}
-
-.avatar_wrap ion-button {
-    margin: 25px auto 0;
-    text-align: center;
-    display: block;
-    width: 150px;
-    max-width: 100%;
 }
 
 

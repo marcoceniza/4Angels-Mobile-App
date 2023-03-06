@@ -4,35 +4,46 @@
          <ion-header class="ion-head">
          </ion-header>
          <ion-content fullscreen="true" id="main-content" scroll-events="true">
-             <ion-text class="ion-padding-start ion-margin-top" color="primary">You will clockout at {{ timers }} on facility  {{ readytoclockoutsched.facility_name }} {{ new Date(readytoclockoutsched.schedules_dates+' '+readytoclockoutsched.schedules_timestart).toLocaleTimeString() }} - {{ new Date(readytoclockoutsched.schedules_dates+' '+readytoclockoutsched.schedules_timeend).toLocaleTimeString() }}</ion-text>
-             <div class="avatar_wrap">
-                 <p>Please provide a selfie</p>
-                 <img :src="readytoclockoutsched.assignschedules_clockoutselfie" v-if="readytoclockoutsched.assignschedules_clockoutselfie != 'https://www.4angelshc.com/mobile/filesystem/' && readytoclockoutsched.assignschedules_clockoutselfie != null"/>
-                 <img src="../../images/profile.svg" v-else/>
-                 <ion-buttons class="camera-icon">
-                     <ion-icon :icon="camera" @click="setProfileImg"></ion-icon>
-                 </ion-buttons>
-                 <ion-button @click="ClockOut">Continue &raquo;</ion-button>
-             </div>
+
+            <ion-list lines="full">
+                <ion-list-header color="danger">
+                    <ion-label><ion-icon :icon="informationCircle"></ion-icon> Clockout Information</ion-label>
+                </ion-list-header>
+                <ion-item>
+                    <ion-label color="medium"><span>Time Clockout:</span> {{ timers }}</ion-label>
+                </ion-item>
+                <ion-item>
+                    <ion-label color="medium"><span>Date:</span> {{ new Date(readytoclockoutsched.schedules_dates).toLocaleDateString() }}</ion-label>
+                </ion-item>
+                <ion-item>
+                    <ion-label color="medium"><span>Time Schedules:</span> {{ new Date(readytoclockoutsched.schedules_dates+' '+readytoclockoutsched.schedules_timestart).toLocaleTimeString('en-US', { hour12: true, hour: "2-digit", minute: "2-digit" }) }} - {{ new Date(readytoclockoutsched.schedules_dates+' '+readytoclockoutsched.schedules_timeend).toLocaleTimeString('en-US', { hour12: true, hour: "2-digit", minute: "2-digit" }) }}</ion-label>
+                </ion-item>
+                <ion-item>
+                    <ion-label color="medium"><span>Facility:</span> {{ readytoclockoutsched.facility_name }}</ion-label>
+                </ion-item>
+            </ion-list>
+
+            <ion-button class="ion-margin-top" expand="block" @click="ClockOut">Continue &raquo;</ion-button>
+
          </ion-content>
      </ion-page>
  </template>
  <script>
- import { defineComponent } from 'vue';
- import { IonContent, IonPage, IonHeader, IonText,IonIcon,IonButtons,IonButton,actionSheetController } from '@ionic/vue';
- import { apps, map, chatbox, settings, ticket, helpCircle, logOut, alertCircle, warning, menu, reader, checkmarkCircle, location, time, calendar, calendarClear, navigate, person, timerOutline,camera } from 'ionicons/icons';
- import { lStore, axios, formatDateString,ImageDataConverter,openToast,calcFlyDist } from '@/functions';
- import axiosA from 'axios';
- import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
- import BackButton from '@/views/BackButton';
- import { defineCustomElements } from '@ionic/pwa-elements/loader';
- import { Geolocation } from '@capacitor/geolocation';
- defineCustomElements(window);
+import { defineComponent } from 'vue';
+import { IonContent, IonPage, IonHeader,actionSheetController, IonList, IonLabel, IonItem, IonButton, IonIcon, IonListHeader } from '@ionic/vue';
+import { lStore, axios, formatDateString,ImageDataConverter,openToast,calcFlyDist } from '@/functions';
+import axiosA from 'axios';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import BackButton from '@/views/BackButton';
+import { informationCircle } from 'ionicons/icons';
+import { defineCustomElements } from '@ionic/pwa-elements/loader';
+import { Geolocation } from '@capacitor/geolocation';
+defineCustomElements(window);
  
  
  export default defineComponent({
      name: 'DashboardView',
-     components: { IonContent, IonPage, IonHeader, IonText,BackButton,IonIcon,IonButtons,IonButton },
+     components: { IonContent, IonPage, IonHeader,BackButton, IonList, IonLabel, IonItem, IonButton, IonIcon, IonListHeader },
      setup() {
          const logScrolling = (e) => {
              if (e.detail.scrollTop >= 20) {
@@ -41,13 +52,16 @@
                  document.querySelector('.ion-head').classList.remove('ion-head-style');
              }
          }
-         return { camera,apps, map, chatbox, settings, ticket, helpCircle, logOut, alertCircle, menu, warning, logScrolling, reader,timerOutline, checkmarkCircle, location, time, calendar, calendarClear, navigate, person };
+         return { logScrolling, informationCircle };
      },
      data() {
          return{
              readytoclockoutsched: {},
              timers: lStore.get('timeOut'),
          }
+     },
+     mounted() {
+        this.timers = new Date().toLocaleTimeString('en-US', { hour12: true, hour: "2-digit", minute: "2-digit" });
      },
      created() {
          
@@ -127,10 +141,7 @@
                          this.loadImage = true;
                          let userFromLStore = this.readytoclockoutsched;
                          userFromLStore.assignschedules_clockoutselfie = image.dataUrl;
-                         openToast('Successfully Added Image', 'primary')
-                         // setTimeout(()=>{
-                         //     this.$router.go(0);
-                         // },2000);
+                         openToast('Successfully Added Image', 'primary');
                      })
                  }
  
@@ -140,32 +151,24 @@
          },
          async ClockOut()
          {
-             if(this.readytoclockoutsched.assignschedules_clockoutselfie == 'https://www.4angelshc.com/mobile/filesystem/' || this.readytoclockoutsched.assignschedules_clockoutselfie == null || this.readytoclockoutsched.assignschedules_clockoutselfie == '')
-             {
-                 openToast('Please provide a Clockout selfie', 'danger');
-                 return;
-             }
-             else{
-                 const coordinates = await Geolocation.getCurrentPosition({enableHighAccuracy:true});
-                 if(calcFlyDist([this.readytoclockoutsched.facility_location_long,this.readytoclockoutsched.facility_location_lat],[coordinates.coords.longitude,coordinates.coords.latitude]) <= 0.2)
-                 {
+        const coordinates = await Geolocation.getCurrentPosition({enableHighAccuracy:true});
+        if(calcFlyDist([this.readytoclockoutsched.facility_location_long,this.readytoclockoutsched.facility_location_lat],[coordinates.coords.longitude,coordinates.coords.latitude]) <= 0.2)
+        {
 
-                        let ClockinTime = new Date().toLocaleTimeString('zh-Hans-CN');
-                        console.log(ClockinTime);
-                        axios.post('assign/update?id='+this.readytoclockoutsched.assignschedules_id,null,{ assignschedules_timeout: ClockinTime, assignschedules_status: 1,assignschedules_timeoutlocationname: await this.mapFind(coordinates.coords.longitude,coordinates.coords.latitude), assignschedules_timeoutlong: coordinates.coords.longitude, assignschedules_timeoutlat: coordinates.coords.latitude}).then(()=>{
-                            openToast('Successfully Clockout', 'primary')
-                        })
-                        setTimeout(()=>{
-                            this.$router.push('employee/dashboard');
-                        },3000);
-                    
-                 }
-                 else
-                 {
-                     openToast('You need to be near on the facility to clockout', 'danger');
-                     return;
-                 }
-             }
+            let ClockoutTime = new Date(new Date().toLocaleDateString()+' '+lStore.get('time')).toLocaleTimeString('zh-Hans-CN');
+            console.log(ClockoutTime);
+            axios.post('assign/update?id='+this.readytoclockoutsched.assignschedules_id,null,{ assignschedules_timeout: ClockoutTime, assignschedules_status: 1,assignschedules_timeoutlocationname: await this.mapFind(coordinates.coords.longitude,coordinates.coords.latitude), assignschedules_timeoutlong: coordinates.coords.longitude, assignschedules_timeoutlat: coordinates.coords.latitude}).then(()=>{
+                openToast('Successfully Clockout', 'light');
+                setTimeout(()=>{
+                    this.$router.push('employee/dashboard');
+                },3000);
+            })
+        }
+        else
+        {
+            openToast('You need to be near on the facility to clockout', 'danger');
+            return;
+        }
          },
          async mapFind(long,lat){
              let accessToken = "pk.eyJ1Ijoic3BlZWR5cmVwYWlyIiwiYSI6ImNsNWg4cGlzaDA3NTYzZHFxdm1iMTJ2cWQifQ.j_XBhRHLg-CcGzah7uepMA";
@@ -177,6 +180,30 @@
  </script>
  
  <style scoped>
+
+ion-list-header {
+    padding: 0 0 0 15px;
+    font-size: 20px;
+}
+
+ion-list-header ion-label {
+    margin: 10px 0 12px;
+}
+
+ion-list-header ion-label ion-icon {
+    position: relative;
+    top: 6px;
+    font-size: 25px;
+}
+
+ion-item ion-label span {
+    color:#555; font-weight:bold;
+}
+
+ion-list {
+    background: #fff;
+}
+
  .mt{
      margin-top: 15px;
  }
