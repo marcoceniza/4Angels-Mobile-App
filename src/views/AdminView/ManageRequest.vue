@@ -11,7 +11,7 @@
         </ion-toolbar>
         <ion-content id="notif_content" fullscreen="true" @click="showArrowNotif" @ionScroll="scrollTopNotif($event)" scroll-events >
 
-            <ion-list>
+            <ion-list class="searchReq">
                 <ion-item lines="none">
                     <ion-select placeholder="Filter Request" interface="action-sheet" v-model="selectedReq">
                         <ion-select-option value="0">Schedule Application</ion-select-option>
@@ -26,16 +26,19 @@
                     <ion-card-header>
                         <ion-card-title>{{ requestType(request.requests_type) }}</ion-card-title>
                         <ion-card-subtitle>{{ request.employee_firstname }} {{ request.employee_lastname }}</ion-card-subtitle>
-                        <ion-card-subtitle>Request Created: {{ dateFormat('%lm %d, %y', request.requests_created_at) }}</ion-card-subtitle>
+                        <ion-card-subtitle>Request Created: {{ dateFormat('%lm %d, %y (%h:%i%a)', request.requests_created_at) }}</ion-card-subtitle>
+                        <ion-card-subtitle>Status: <span>{{ status(request.requests_status) }}</span></ion-card-subtitle>
                     </ion-card-header>
 
                     <ion-card-content>
                         <strong>Reason:</strong> {{ request.requests_reason }}
                     </ion-card-content>
 
-                    <ion-button @click="setOpen(true); viewRequest(request.requests_id)" fill="clear"><ion-icon :icon="eye"></ion-icon> View</ion-button>
-                    <ion-button fill="clear"><ion-icon :icon="checkmarkCircle"></ion-icon> Accept</ion-button>
-                    <ion-button fill="clear"><ion-icon :icon="closeCircle"></ion-icon> Denied</ion-button>
+                    <div class="btnAction_wrap">
+                        <ion-button @click="setOpen(true); viewRequest(request.requests_id)" fill="clear"><ion-icon :icon="eye"></ion-icon> View</ion-button>
+                        <!-- <ion-button v-if="request.requests_status == 0" fill="clear"><ion-icon :icon="checkmarkCircle"></ion-icon> Approve</ion-button>
+                        <ion-button v-if="request.requests_status == 0" fill="clear"><ion-icon :icon="closeCircle"></ion-icon> Denied</ion-button> -->
+                    </div>
                 </div>
             </ion-card>
 
@@ -64,7 +67,7 @@
                                 <ion-label>Status: {{ status(viewedRequest.requests_status) }}</ion-label>
                             </ion-item>
                             <ion-item lines="none">
-                                <ion-label>Created At: {{ dateFormat('%lm %d, %y', viewedRequest.requests_created_at) }}</ion-label>
+                                <ion-label>Created At: {{ dateFormat('%lm %d, %y (%h:%i%a)', viewedRequest.requests_created_at) }}</ion-label>
                             </ion-item>
                         </ion-item-group>
                     </ion-list>
@@ -159,7 +162,7 @@ export default defineComponent({
         isSeen(ID) {
             axios.post(`notifications/update?userid=${lStore.get('user_info').employee_id}&id=${ID}`, null, { notifications_isseen: 0 }).then(res => {
                 if(!res.data.success) return;
-               return true; 
+               return true;
             });
         },
         async openLoader() {
@@ -209,12 +212,27 @@ export default defineComponent({
         axios.post(`requests?&_joins=schedules,employee&_on=requests.requests_schedulesid=schedules.schedules_id,requests.requests_employeeid=employee.employee_id&_batch=true`).then(res => {
             if(!res.data.success) return;
             this.requests = res.data.result;
+            this.requests.reverse();
         });
     },
 });
 </script>
 
 <style scoped>
+
+ion-card-subtitle span {
+    color: #aa0927;
+    font-weight: bold;
+}
+
+.btnAction_wrap {
+    display: flex;
+    justify-content: center;
+}
+
+.searchReq {
+    margin-bottom: 25px;
+}
 
 ion-item-divider ion-label {
     padding-left: 8px;
@@ -316,22 +334,8 @@ ion-header.hidden {
     font-size: 28px;
 }
 
-.sub-header {
-    position: relative;
-    top: 0;
-    --padding-top: 0;
-    transition: top ease-in-out 500ms;
-    z-index: 1;
-}
-
-.sub-header ion-card {
-    margin: 0 auto 8px; 
-    padding: 15px 0;
-    border-radius: 25px;
-}
-
-.sub-header.hidden {
-    top: -250px;
+ion-card {
+    margin: 12px 4px;
 }
 
 ion-header {

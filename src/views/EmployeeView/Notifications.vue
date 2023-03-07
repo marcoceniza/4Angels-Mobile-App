@@ -16,17 +16,17 @@
         </ion-toolbar>
         <ion-content id="notif_content" fullscreen="true" @click="showArrowNotif" @ionScroll="scrollTopNotif($event)" scroll-events >
 
-            <div class="sortNotif">
+            <!-- <div class="sortNotif">
                 <p>Total: {{ this.totalNotif }}</p>
                 <p><a href="javascript:;" @click="sortNotifHandler"><ion-icon :icon="funnel"></ion-icon></a></p>
-            </div>
+            </div> -->
             
-            <ion-list v-for="notifs in this.notif" :key="notifs.id">
-                <ion-item :class="(notifs.notifications_isseen > 0) ? 'isPending' : 'isRead'" lines="none" button @click="isSeen(notifs.notifications_id), $router.push('/employee/schedules')">
+            <ion-list v-for="notif in this.notifs" :key="notif.id">
+                <ion-item :class="(notif.requests_isseen != 0) ? 'isPending' : 'isRead'" lines="none" button @click="isSeen(notif.requests_id), $router.push('/employee/schedules')">
                     <ion-label>
-                        <h1 class="ion-margin-bottom">{{ notifs.notifications_title }}</h1>
-                        <p class="ion-text-wrap">Description: {{ notifs.notifications_description }}</p>
-                        <p>Date: {{ dateFormat('%lm %d, %y', notifs.notifications_createdate) }}</p>
+                        <h1 class="ion-margin-bottom">{{ requestType(notif.requests_type) }}</h1>
+                        <p>Status: {{ status(notif.requests_status) }}</p>
+                        <p>Request Date: {{ dateFormat('%lm %d, %y (%h:%i%a)', notif.requests_created_at) }}</p>
                     </ion-label>
                 </ion-item>
             </ion-list>
@@ -50,7 +50,7 @@ export default defineComponent({
         return {
             user: {},
             cifile: 'https://www.4angelshc.com/mobile/filesystem/',
-            notif: '',
+            notifs: '',
             realtimeData: '',
             continueInterval: false,
             totalNotif: ''
@@ -72,15 +72,27 @@ export default defineComponent({
     },
     methods: {
         dateFormat,
+        status(num){
+            let status = parseInt(num);
+            switch(status){
+                case 0: return 'Pending';
+                case 1: return 'Approved';
+                case 2: return 'Denied';
+            }
+        },
+        requestType(num){            
+            let type = parseInt(num);
+            switch(type){
+                case 0: return 'Schedule Application';
+                case 1: return 'Reschedule Request';
+                case 2: return 'Reassign Requests';
+            }
+        },
         showArrowNotif() {
             document.getElementById('notif_content').scrollToTop(1500);
         },
-        sortNotifHandler() {
-            this.notif.reverse();
-            clearInterval(this.realtimeData);
-        },
         isSeen(ID) {
-            axios.post(`notifications/update?userid=${lStore.get('user_info').employee_id}&id=${ID}`, null, { notifications_isseen: 0 }).then(res => {
+            axios.post(`requests/update?employeeid=${lStore.get('user_id')}&id=${ID}`, null, { requests_isseen: 0 }).then(res => {
                 if(!res.data.success) return;
                return true; 
             });
@@ -88,10 +100,10 @@ export default defineComponent({
     },
     mounted() {
         this.realtimeData = setInterval(() => {
-            axios.post(`notifications?_batch=true&notifications_userid=${lStore.get('user_info').employee_id}&_orderedby=notifications__createdate_DESC`).then(res => {
+            axios.post(`requests?_batch=true&requests_employeeid=${lStore.get('user_id')}&_orderedby=requests__id_DESC`).then(res => {
                 if(!res.data.success) return;
-                this.notif = res.data.result;
-                this.totalNotif = Object.keys(this.notif).length;
+                this.notifs = res.data.result;
+                this.totalNotif = Object.keys(this.notifs).length;
             });
         }, 1000);
     },

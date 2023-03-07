@@ -12,15 +12,15 @@
                     <ion-icon :icon="calendar" />
                 </ion-tab-button>
 
-                <ion-tab-button @click="notifHandler()" tab="notifications" href="/employee/notifications">
-                    <ion-icon :icon="notifications" />
-                    <p v-show="this.notifCounter > 0" class="notif_wrap">
-                        <span class="notif">{{ this.notifCounter }}</span>
-                    </p>
-                </ion-tab-button>
-
                 <ion-tab-button tab="timesheets" href="/employee/timesheets">
                     <ion-icon :icon="time" />
+                </ion-tab-button>
+
+                <ion-tab-button @click="notifHandler" tab="notifications" href="/employee/notifications">
+                    <ion-icon :icon="notifications" />
+                    <p v-show="this.notifCounter != 0" class="notif_wrap">
+                        <span class="notif">{{ this.notifCounter }}</span>
+                    </p>
                 </ion-tab-button>
 
                 <ion-tab-button tab="profile" href="/employee/profile">
@@ -55,7 +55,7 @@ export default defineComponent({
     methods: {
         notifHandler() {
             setTimeout(() => {
-                axios.post(`notifications/update?userid=${lStore.get('user_info').employee_id}`, null, { notifications_isread: 0 }).then(res => {
+                axios.post(`requests/update?employeeid=${lStore.get('user_id')}`, null, { requests_isread: 0 }).then(res => {
                     if(!res.data.success) return;
                     return true;
                 });
@@ -64,7 +64,7 @@ export default defineComponent({
     },
     mounted() {
         setInterval(() => {
-            axios.post(`notifications?_batch=true&notifications_userid=${lStore.get('user_info').employee_id}&notifications_isread=1`).then(res => {
+            axios.post(`requests?_batch=true&requests_employeeid=${lStore.get('user_id')}&requests_isread=1`).then(res => {
                 if(!res.data.success) {
                     this.notifCounter = 0;
                     return;

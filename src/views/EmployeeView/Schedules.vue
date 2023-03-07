@@ -425,9 +425,14 @@ export default defineComponent({
                             requests_employeeid : lStore.get('user_id'),
                             requests_schedulesid : selectedSched.schedules_id,
                             requests_created_at: new Date().toLocaleString('zh-Hans-CN').replaceAll('-',''),
-                            requests_updated_at: new Date().toLocaleString('zh-Hans-CN').replaceAll('-','')
+                            requests_updated_at: new Date().toLocaleString('zh-Hans-CN').replaceAll('-',''),
+                            requests_isseen: 1,
+                            requests_isread: 1
                         }).then(()=>{
-                            window.location.reload();
+                            openToast('Waiting for Admin Approval', 'light');
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 3000)
                         })
                     })
                     
