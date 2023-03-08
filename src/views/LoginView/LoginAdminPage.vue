@@ -26,7 +26,10 @@
                             <ion-spinner name="dots"></ion-spinner>
                         </span>
                     </ion-button>
-                    <a class="loginLink" href="javascript:;" @click="$router.push('/login')">Login as Employee &raquo;</a>
+                    <div class="btn_wrap">
+                        <a href="javascript:;" @click="setOpen3(true)">Forgot password</a>
+                        <a href="javascript:;" @click="$router.push('/login')">Login as Employee</a>
+                    </div>
                 </div>
                 <ion-text class="privacy">By logging in, I agree to <strong>4Angels Healthcare Staffing</strong>'s <a @click="setOpen(true)" href="javascript:;">Terms of Service and Privacy Policy</a></ion-text>
             </div>
@@ -128,6 +131,38 @@
                     </ion-list>
                 </ion-content>
             </ion-modal>
+
+            <ion-modal :is-open="isOpen3">
+                <ion-header>
+                    <ion-toolbar>
+                        <ion-title>Forgot Password</ion-title>
+                        <ion-buttons @click="setOpen3(false)" slot="end">
+                            <ion-icon :icon="close"></ion-icon>
+                        </ion-buttons>
+                    </ion-toolbar>
+                </ion-header>
+                <ion-content class="ion-padding resetPass">
+                    <img src="../../images/Resetpass.svg" alt="reset password"/>
+                    <div class="passText">
+                        <h2>Forgot password</h2>
+                        <p>Enter your email to receive an emailto reset your password.</p>
+                    </div>
+                    <ion-list>
+                        <ion-item lines="none">
+                            <ion-label>
+                                <ion-input :clear-input="true" placeholder="Email"></ion-input>
+                            </ion-label>
+                        </ion-item>
+                    </ion-list>
+                    <ion-button color="danger" class="ion-margin-top btn_reset" expand="block" size="large" :disabled="formLoading">
+                        <span v-if="!formLoading3" >Send</span>
+                        <span v-if="formLoading3">
+                            <ion-spinner name="dots"></ion-spinner>
+                        </span>
+                    </ion-button>
+                </ion-content>
+            </ion-modal>
+
         </ion-content>
     </ion-page>
 </template>
@@ -146,18 +181,31 @@ export default defineComponent({
             loginInput: "",
             password: "",
             formLoading: false,
+            formLoading3: false,
             showIcon: true,
             showIcon2: false,
             eye,
             eyeOff,
             close,
             isOpen: false,
-            isOpen2: false, 
+            isOpen3: false, 
         };
     },
     methods: {
+        resetPass() {
+            this.formLoading3 = true;
+            axios.post('/email/forgotpassword/',null,{email: this.resetField}).then(res => {
+                if(!res.data.success) return;
+                this.formLoading3 = false;
+                openToast(`Message sent to this email ${this.resetField}`, 'light');
+                this.resetField = '';
+            });
+        },
         setOpen(isOpen) {
             this.isOpen = isOpen;
+        },
+        setOpen3(isOpen3) {
+            this.isOpen3 = isOpen3;
         },
         login() {
             let rules = {password:{isRequired:true}};
@@ -210,20 +258,58 @@ export default defineComponent({
 
 <style scoped>
 
+.passText {
+    margin-bottom: 45px;
+}
+
+.passText p {
+    color: #92949c;
+}
+
+.btn_reset {
+    --border-radius: 30px !important;
+}
+
+.resetPass {
+    text-align: center;
+}
+
+.resetPass img {
+    width: 280px;
+    display: block;
+    margin: 0 auto;
+}
+
+.resetPass ion-item {
+    --min-height: 0 !important;
+    --border-width: 1px;
+    --border-radius: 30px;
+    --background: var(--ion-color-light-tint) !important;
+}
+
+.resetPass ion-item ion-label {
+    max-width: 100% !important;
+    width: 100% !important;
+}
+
 .form-header p small {
     display: block;
     font-size: 12px !important;
     margin-top: 5px;
 }
 
-.loginLink {
+.btn_wrap {
+    display: flex;
+    justify-content: space-between;
+}
+
+.btn_wrap a {
     display: block;
     text-align: right;
     position: relative;
     bottom: -15px;
-    font-style: italic;
     color: #555;
-    font-size: 15px;
+    font-size: 14px;
     text-decoration: none;
 }
 

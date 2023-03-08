@@ -198,7 +198,7 @@ export default defineComponent({
                 );
             });
             return filtered;
-        }
+        },
     },
     methods: {
         dateFormat,
