@@ -33,9 +33,9 @@ export default ({
         let route = useRoute();
         onIonViewDidEnter(() => {
             setTimeout(() => {
-                if(!lStore.isset('user_token')) {
+                if(!lStore.isset('user_info')) {
                     router.push('/welcome');
-                }else if (!lStore.get('user_token')) {
+                }else if (!lStore.get('user_info')) {
                     if (this.loginPaths.includes(route.path)) return;
                     router.push('/login');
                     router.push('/loginadmin');
@@ -43,15 +43,6 @@ export default ({
                     router.push('/admin/reports');
                 }
             }, 1500);
-            // if(!lStore.isset('user_token')) {
-            //     setTimeout(() => {
-            //         router.push('/welcome');
-            //     }, 1500);
-            // } else {
-            //     setTimeout(() => {
-            //         router.replace('/employee/dashboard');
-            //     }, 1500);
-            // }
         });
     }
 });
@@ -70,6 +61,7 @@ ion-content {
     align-items: center;
     width: 100%;
     height: 100%;
+    margin: 0 auto;
 }
 
 .icon {
@@ -84,12 +76,12 @@ ion-content {
 
 .name {
     position: relative;
-    width: 100%;
     max-width: 60vw;
-    margin: 0;
+    margin: 0 auto;
     animation-name: fadeInTop;
     animation-duration: 1s;
     animation-fill-mode: both;
+    display: flex;
 }
 
 @keyframes fadeInDown {

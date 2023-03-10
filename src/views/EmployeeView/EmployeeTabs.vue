@@ -36,7 +36,7 @@
 import { defineComponent } from 'vue';
 import { IonPage, IonRouterOutlet, IonTabs, IonTabBar, IonTabButton, IonIcon } from '@ionic/vue';
 import { home, time, carSport, notifications, person, calendar, calendarClear } from 'ionicons/icons';
-import { lStore, axios } from '@/functions';
+// import { lStore, axios } from '@/functions';
 
 export default defineComponent({
     name: 'EmployeeTabs',
@@ -50,27 +50,27 @@ export default defineComponent({
         return { home, time, carSport, notifications, person, calendar, calendarClear };
     },
     created() {
-        this.user = lStore.get('user_info');
+        // this.user = lStore.get('user_info');
     },
     methods: {
         notifHandler() {
             setTimeout(() => {
-                axios.post(`requests/update?employeeid=${lStore.get('user_id')}`, null, { requests_isread: 0 }).then(res => {
-                    if(!res.data.success) return;
-                    return true;
-                });
+                // axios.post(`requests/update?employeeid=${lStore.get('user_id')}`, null, { requests_isread: 0 }).then(res => {
+                //     if(!res.data.success) return;
+                //     return true;
+                // });
             }, 1000);
         }
     },
     mounted() {
         setInterval(() => {
-            axios.post(`requests?_batch=true&requests_employeeid=${lStore.get('user_id')}&requests_isread=1`).then(res => {
-                if(!res.data.success) {
-                    this.notifCounter = 0;
-                    return;
-                }
-                this.notifCounter = res.data.result.length;
-            });
+            // axios.post(`requests?_batch=true&requests_employeeid=${lStore.get('user_id')}&requests_isread=1`).then(res => {
+            //     if(!res.data.success) {
+            //         this.notifCounter = 0;
+            //         return;
+            //     }
+            //     this.notifCounter = res.data.result.length;
+            // });
         }, 1000)
     },
 });

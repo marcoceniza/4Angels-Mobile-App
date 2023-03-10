@@ -9,8 +9,8 @@
                 </div>
                 <div class="form-input">
                     <ion-item>
-                        <ion-label position="stacked">Username</ion-label>
-                        <ion-input type="email" v-model="loginInput" placeholder="Enter username here"></ion-input>
+                        <ion-label position="stacked">Email</ion-label>
+                        <ion-input type="email" v-model="loginInput" placeholder="Enter Email here"></ion-input>
                     </ion-item>
                     <ion-item>
                         <ion-label position="stacked">Password</ion-label>
@@ -170,7 +170,7 @@
 <script>
 import { defineComponent } from 'vue';
 import { IonContent, IonPage, IonText, IonItem, IonLabel, IonInput, IonButton, IonSpinner, IonModal, IonList, IonIcon, IonTitle, IonButtons, IonToolbar, IonHeader } from '@ionic/vue';
-import { axios, validateForm, openToast, lStore } from '@/functions';
+import { axios, openToast, lStore } from '@/functions';
 import { eye, eyeOff, close } from 'ionicons/icons';
 
 export default defineComponent({
@@ -195,7 +195,7 @@ export default defineComponent({
     methods: {
         resetPass() {
             this.formLoading2 = true;
-            axios.post('http://4angelshc.com/mobile/email/forgotpassword',null,{email: this.resetField}).then(res => {
+            axios.post('email/forgotpassword',null,{email: this.resetField}).then(res => {
                 if(!res.data.success) return;
                 this.formLoading2 = false;
                 openToast(`Message sent to this email ${this.resetField}`, 'light');
@@ -209,35 +209,22 @@ export default defineComponent({
             this.isOpen2 = isOpen2;
         },
         login() {
-            let rules = {password:{isRequired:true}};
-            let input = {password:this.password};
-            input.email = this.loginInput;
-            rules.callback = ()=>{openToast('All fields are required!', 'danger')};
-            
-            const valid = validateForm(input,rules);
-            if(!valid.allValid) return;
-            
             this.formLoading = true;
 
-            axios.post('employee/login',null,{
-                login: this.loginInput,
+            axios.post('usercontroller/mauthuser',null,{
+                email: this.loginInput,
                 password: this.password
-            }).catch(err=>{
-                console.log(err);
-                openToast('Something went wrong...', 'danger');
             }).then(res=>{
-                if(res.data.msg === 'user not found') openToast('User not registered!', 'danger');
-                if(res.data.msg === 'wrong password') openToast('Wrong password!', 'danger');
                 this.formLoading = false;
-                
                 if(res.data.success) {
-                    lStore.set('user_id',res.data.result.employee_id);
-                    lStore.set('user_token',res.data.token);
-                    lStore.set('user_info', res.data.result);
-                    openToast('Login Success', 'primary');
+                    lStore.set('user_token',res.data.result['token']);
+                    lStore.set('user_info', res.data.result[0]);
+                    openToast(res.data.msg, 'primary');
                     this.$router.replace('/employee/dashboard');
+                }else{
+                    openToast(res.data.msg, 'danger');
                 }
-            });
+            })
         },
         showPass(e) {
             document.querySelector("#password input").focus();

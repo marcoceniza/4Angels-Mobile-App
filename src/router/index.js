@@ -37,7 +37,7 @@ export const routes = [
     name: 'WelcomePage',
     component: WelcomePage,
     beforeEnter: () => {
-      if (lStore.isset('user_token')) return false;
+      if (lStore.isset('user_info')) return false;
     }
   },
   {path: '/loginadmin', name: 'LoginAdminPage', component: LoginAdminPage},
@@ -51,35 +51,35 @@ export const routes = [
         path: '/employee/dashboard',
         component: DashboardView,
         beforeEnter: () => {
-          if (!lStore.isset('user_token')) return '/login';
+          if (!lStore.isset('user_info')) return '/login';
         },
       },
       {
         path: '/employee/schedules',
         component: SchedulesView,
         beforeEnter: () => {
-          if (!lStore.isset('user_token')) return '/login';
+          if (!lStore.isset('user_info')) return '/login';
         },
       },
       {
         path: '/employee/notifications',
         component: NotificationsView,
         beforeEnter: () => {
-          if (!lStore.isset('user_token')) return '/login';
+          if (!lStore.isset('user_info')) return '/login';
         },
       },
       {
         path: '/employee/timesheets',
         component: TimesheetsView,
         beforeEnter: () => {
-          if (!lStore.isset('user_token')) return '/login';
+          if (!lStore.isset('user_info')) return '/login';
         },
       },
       {
         path: '/employee/profile',
         component: EmployeeProfile,
         beforeEnter: () => {
-          if (!lStore.isset('user_token')) return '/login';
+          if (!lStore.isset('user_info')) return '/login';
         },
       },
     ],
@@ -92,14 +92,14 @@ export const routes = [
         path: '/admin/reports',
         component: ViewReports,
         beforeEnter: () => {
-          if (!lStore.isset('user_token')) return '/login';
+          if (!lStore.isset('user_info')) return '/loginadmin';
         },
       },
       {
         path: '/admin/request',
         component: ManageRequest,
         beforeEnter: () => {
-          if (!lStore.isset('user_token')) return '/login';
+          if (!lStore.isset('user_info')) return '/loginadmin';
         },
       },
     ],

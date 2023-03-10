@@ -9,14 +9,14 @@
             </ion-buttons>
             <ion-header>Profile</ion-header>
             <ion-avatar>
-                <img :src="user.employee_profilepicture" v-if="user.employee_profilepicture != 'https://www.4angelshc.com/mobile/filesystem/'"/>
+                <img :src="'https://www.4angelshc.com/wangelmobile/filesystem/'+user.user_photo" v-if="user.user_photo != ''"/>
                 <img src="../../images/profile.svg" v-else/>
                 <ion-buttons class="camera-icon">
                     <ion-icon :icon="camera" @click="setProfileImg"></ion-icon>
                 </ion-buttons>
                 <ion-spinner v-show="loadImageLoader" class="load-img" name="dots"></ion-spinner>
             </ion-avatar>
-            <h2 class="title_name">{{ user.employee_firstname }} {{ user.employee_lastname }}<span></span></h2>
+            <h2 class="title_name">{{ user.user_firstname }} {{ user.user_lastname }}<span></span></h2>
         </ion-toolbar>
         <ion-content fullscreen="true">
             <ion-refresher style="position:relative; z-index:999;" slot="fixed" @ionRefresh="handleRefresh($event)">
@@ -27,22 +27,22 @@
                 <ion-item lines="full">
                     <ion-icon :icon="mail" slot="start" color="medium"></ion-icon>
                     <ion-label position="stacked">Email</ion-label>
-                    <ion-input v-model="user.employee_emailaddress" :disabled="true"></ion-input>
+                    <ion-input v-model="user.user_email" :disabled="true"></ion-input>
                 </ion-item>
                 <ion-item lines="full">
                     <ion-icon :icon="call" slot="start" color="medium"></ion-icon>
                     <ion-label position="stacked">Phone</ion-label>
-                    <ion-input v-model="user.employee_phonenumber" :disabled="true"></ion-input>
+                    <ion-input v-model="user.user_phone" :disabled="true"></ion-input>
                 </ion-item>
                 <ion-item lines="full">
                     <ion-icon :icon="calendar" slot="start" color="medium"></ion-icon>
                     <ion-label position="stacked">Birthday</ion-label>
-                    <ion-input v-model="user.employee_birthday" :disabled="true"></ion-input>
+                    <ion-input v-model="user.user_birthday" :disabled="true"></ion-input>
                 </ion-item>
                 <ion-item lines="full">
                     <ion-icon :icon="briefcase" slot="start" color="medium"></ion-icon>
                     <ion-label position="stacked">Hired Date</ion-label>
-                    <ion-input v-model="user.employee_hiredate" :disabled="true"></ion-input>
+                    <ion-input v-model="user.user_datehired" :disabled="true"></ion-input>
                 </ion-item>
             </ion-list>
             <ion-grid>
@@ -108,19 +108,19 @@
                     <ion-list>
                         <ion-item>
                             <ion-label position="stacked">Firstname</ion-label>
-                            <ion-input v-model="user.employee_firstname"></ion-input>
+                            <ion-input v-model="user.user_firstname"></ion-input>
                         </ion-item>
                         <ion-item>
                             <ion-label position="stacked">Lastname</ion-label>
-                            <ion-input v-model="user.employee_lastname"></ion-input>
+                            <ion-input v-model="user.user_lastname"></ion-input>
                         </ion-item>
                         <ion-item>
                             <ion-label position="stacked">Email</ion-label>
-                            <ion-input v-model="user.employee_emailaddress"></ion-input>
+                            <ion-input v-model="user.user_email"></ion-input>
                         </ion-item>
                         <ion-item>
                             <ion-label position="stacked">Phone</ion-label>
-                            <ion-input v-model="user.employee_phonenumber"></ion-input>
+                            <ion-input v-model="user.user_phone"></ion-input>
                         </ion-item>
                     </ion-list>
                     <ion-grid>
@@ -175,7 +175,6 @@ export default defineComponent({
     },
     created() {
         this.user = lStore.get('user_info');
-        console.log(this.user.employee_profilepicture);
         this.path = this.cifile+this.user.employee_id;
         this.relativePath = this.user.employee_id;
         axios.post('files?path='+this.relativePath).then(res=>{

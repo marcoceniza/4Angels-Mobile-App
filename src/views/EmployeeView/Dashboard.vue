@@ -29,13 +29,13 @@
                 <ion-menu-button slot="start"></ion-menu-button>
                 <ion-buttons slot="end">
                     <ion-avatar @click="$router.push('/employee/profile')">
-                        <img :src="user.employee_profilepicture" v-if="user.employee_profilepicture != 'https://www.4angelshc.com/mobile/filesystem/'"/>
+                        <img :src="'https://www.4angelshc.com/wangelmobile/filesystem'+user.user_photo" v-if="user.user_photo != ''"/>
                         <img src="../../images/profile.svg" v-else/>
                     </ion-avatar>
                 </ion-buttons>
             </ion-toolbar>
             <ion-toolbar>
-                <ion-text class="ion-padding-start ion-margin-top" color="primary">Hello {{ user.employee_firstname }} {{ user.employee_lastname }}</ion-text>
+                <ion-text class="ion-padding-start ion-margin-top" color="primary">Hello {{ user.user_firstname }} {{ user.user_lastname }}</ion-text>
                 <p class="ion-padding-start">{{ getMonthToday }} {{ new Date().getDate() }}, {{ new Date().getFullYear() }}</p>
             </ion-toolbar>
         </ion-header>
@@ -50,8 +50,8 @@
                 <p>SECONDS <span>{{ seconds }}</span></p>
             </div>
 
-            <div class="schedule_wrap">
-                <div v-if="Object.keys(current).length == 0"><!--check if naay existing schedule nga naka clocking which is status kay 2-->
+            <!-- <div class="schedule_wrap">
+                <div v-if="Object.keys(current).length == 0">
                 <ion-text color="primary">
                     <ion-icon :icon="calendar" color="light"></ion-icon>
                     <h4>Choose your shift below:</h4>
@@ -102,21 +102,22 @@
                     </div>
                     <ion-button @click="ClockOut(current.schedules_id,new Date().toLocaleTimeString('zh-Hans-CN'))" expand="block" color="light">Clock Out</ion-button>
                 </div>
-            </div>
+            </div> -->
 
         </ion-content>
     </ion-page>
 </template>
 <script>
 import { defineComponent } from 'vue';
-import { IonContent, IonPage, IonHeader, IonToolbar, IonCard, IonCardHeader, IonCardTitle,IonCardSubtitle,IonCardContent, menuController, IonButtons,IonButton, IonMenu, IonMenuButton, IonRefresher, IonRefresherContent, IonIcon, IonRouterOutlet, IonLabel, IonItem, IonList, IonAvatar, IonText,actionSheetController } from '@ionic/vue';
+import { IonContent, IonPage, IonHeader, IonToolbar, menuController, IonButtons, IonMenu, IonMenuButton, IonRefresher, IonRefresherContent, IonIcon, IonLabel, IonItem, IonList, IonAvatar, IonText,actionSheetController,IonRouterOutlet } from '@ionic/vue';
 import { apps, map, chatbox, settings, ticket, helpCircle, logOut, alertCircle, warning, menu, reader, checkmarkCircle, location, time, calendar, calendarClear, navigate, person, timerOutline } from 'ionicons/icons';
-import { lStore, axios, formatDateString,dateFormat } from '@/functions'; 
+import { lStore, axios,dateFormat } from '@/functions'; 
+// formatDateString IonCard, IonCardHeader, IonCardTitle,IonCardSubtitle,IonCardContent,IonButton
 
 
 export default defineComponent({
     name: 'DashboardView',
-    components: { IonContent, IonPage, IonHeader, IonToolbar, IonCard, IonCardHeader, IonCardTitle,IonCardSubtitle,IonCardContent, IonButtons,IonButton, IonMenu, IonMenuButton, IonRefresher, IonRefresherContent, IonIcon, IonRouterOutlet, IonLabel, IonItem, IonList, IonAvatar, IonText },
+    components: { IonContent, IonPage, IonHeader, IonToolbar, IonButtons, IonMenu, IonMenuButton, IonRefresher, IonRefresherContent, IonIcon, IonLabel, IonItem, IonList, IonAvatar, IonText,IonRouterOutlet },
     setup() {
         const logScrolling = (e) => {
             if (e.detail.scrollTop >= 20) {
@@ -125,7 +126,7 @@ export default defineComponent({
                 document.querySelector('.ion-head').classList.remove('ion-head-style');
             }
         }
-        return { apps, map, chatbox, settings, ticket, helpCircle, logOut, alertCircle, menu, warning, logScrolling, reader,timerOutline, checkmarkCircle, location, time, calendar, calendarClear, navigate, person, IonRefresher, IonRefresherContent };
+        return { apps, map, chatbox, settings, ticket, helpCircle, logOut, alertCircle, menu, warning, logScrolling, reader,timerOutline, checkmarkCircle, location, time, calendar, calendarClear, navigate, person, IonRefresher, IonRefresherContent,IonRouterOutlet };
     },
     data() {
         return{
@@ -214,36 +215,36 @@ export default defineComponent({
         },
         async fetchScheds(){
             this.current = {};
-            let currentDate = new Date();
-            let currentDateString = currentDate.toLocaleDateString().split('/');
-            currentDateString = formatDateString(currentDateString[2] + '-' + currentDateString[0] + '-' + currentDateString[1]).replaceAll(' ','');
+            // let currentDate = new Date();
+            // let currentDateString = currentDate.toLocaleDateString().split('/');
+            // currentDateString = formatDateString(currentDateString[2] + '-' + currentDateString[0] + '-' + currentDateString[1]).replaceAll(' ','');
 
             let weekDate = new Date();
             weekDate.setDate(weekDate.getDate()+7);
             weekDate = weekDate.toLocaleDateString();
-            let weekDateArr = weekDate.split('/');
-            let weekDateString = formatDateString(weekDateArr[2]+'-'+weekDateArr[0]+'-'+weekDateArr[1]).replaceAll(' ','');
-            let resp = await axios.post(`schedule?_joins=assignschedules,assigndesignation,facility,role&_on=assignschedules_scheduleid=schedules_id,assigndesignation_id=assignschedules_assigndesignationid,schedules_facilityid=facility_id,role_id=assigndesignation_roleid&_GTE_schedules_dates=${currentDateString}&_LSE_schedules_dates=${weekDateString}&_batch=true&assigndesignation:assigndesignation_employeeid=${lStore.get('user_id')}&_orderby=dates,schedules__timestart_ASC`);
-            if(resp.data == null || !resp.data.success) return;
-            if(resp.data != null && resp.data.success) {
-                //Getting Upcoming schedules
-                resp.data.result.forEach(element => {
-                    console.log(element.assignschedules_status > 5 && element.assignschedules_status < 10 && element.assignschedules_status != 8 && element.assignschedules_timeout == null || element.assignschedules_status == 2)
-                    if(element.assignschedules_status > 5 && element.assignschedules_status < 10 && element.assignschedules_status != 8 && element.assignschedules_timeout == null || element.assignschedules_status == 2)
-                    {
-                        this.current = element;
-                    }
-                });
-                if(Object.keys(this.current).length == 0)
-                {                    
-                    this.upcoming = resp.data.result.filter(el =>{
-                        return new Date(el.schedules_dates).toLocaleDateString() == new Date().toLocaleDateString() && el.assignschedules_timein == null && new Date(new Date(el.schedules_dates).toLocaleDateString()+ ' '+ new Date(new Date(el.schedules_dates).toLocaleDateString()+' '+el.schedules_timeend).toLocaleTimeString()).getTime() >= new Date(new Date().toLocaleDateString()+' '+new Date().toLocaleTimeString()).getTime();
-                    })
-                    this.upcoming = this.upcoming.sort((a,b)=>{
-                        return new Date(a.schedules_dates+' '+ a.schedules_timestart) - new Date(b.schedules_dates+' '+ b.schedules_timestart)
-                    });
-                }
-            }
+            // let weekDateArr = weekDate.split('/');
+            // let weekDateString = formatDateString(weekDateArr[2]+'-'+weekDateArr[0]+'-'+weekDateArr[1]).replaceAll(' ','');
+            // let resp = await axios.post(`schedule?_joins=assignschedules,assigndesignation,facility,role&_on=assignschedules_scheduleid=schedules_id,assigndesignation_id=assignschedules_assigndesignationid,schedules_facilityid=facility_id,role_id=assigndesignation_roleid&_GTE_schedules_dates=${currentDateString}&_LSE_schedules_dates=${weekDateString}&_batch=true&assigndesignation:assigndesignation_employeeid=${lStore.get('user_id')}&_orderby=dates,schedules__timestart_ASC`);
+            // if(resp.data == null || !resp.data.success) return;
+            // if(resp.data != null && resp.data.success) {
+            //     //Getting Upcoming schedules
+            //     resp.data.result.forEach(element => {
+            //         console.log(element.assignschedules_status > 5 && element.assignschedules_status < 10 && element.assignschedules_status != 8 && element.assignschedules_timeout == null || element.assignschedules_status == 2)
+            //         if(element.assignschedules_status > 5 && element.assignschedules_status < 10 && element.assignschedules_status != 8 && element.assignschedules_timeout == null || element.assignschedules_status == 2)
+            //         {
+            //             this.current = element;
+            //         }
+            //     });
+            //     if(Object.keys(this.current).length == 0)
+            //     {                    
+            //         this.upcoming = resp.data.result.filter(el =>{
+            //             return new Date(el.schedules_dates).toLocaleDateString() == new Date().toLocaleDateString() && el.assignschedules_timein == null && new Date(new Date(el.schedules_dates).toLocaleDateString()+ ' '+ new Date(new Date(el.schedules_dates).toLocaleDateString()+' '+el.schedules_timeend).toLocaleTimeString()).getTime() >= new Date(new Date().toLocaleDateString()+' '+new Date().toLocaleTimeString()).getTime();
+            //         })
+            //         this.upcoming = this.upcoming.sort((a,b)=>{
+            //             return new Date(a.schedules_dates+' '+ a.schedules_timestart) - new Date(b.schedules_dates+' '+ b.schedules_timestart)
+            //         });
+            //     }
+            // }
 
         },
         async ClockOut(data, data2){

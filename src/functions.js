@@ -100,7 +100,7 @@ class AxiosR{
     }
 }
 
-export const axios = new AxiosR('https://4angelshc.com/mobile/',{
+export const axios = new AxiosR('https://www.4angelshc.com/wangelmobile/',{
     PWAuth: 'test_token_1',
     PWAuthUser: 10000160
 });
